@@ -22,6 +22,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
+install_requires = ['pyramid', 'deform']
+
 setup(name='pyramid_deform',
       version=__version__,
       description=('Bindings to the Deform form library for the Pyramid web '
@@ -40,8 +42,8 @@ setup(name='pyramid_deform',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      tests_require = ['pyramid'],
-      install_requires=['pyramid'],
+      tests_require = install_requires,
+      install_requires = install_requires,
       test_suite="pyramid_deform",
       entry_points = """\
       """

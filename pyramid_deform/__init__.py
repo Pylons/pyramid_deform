@@ -102,20 +102,20 @@ class FormWizardView(object):
         step = self.get_step_num()
         self.set_step_state(step, validated)
         self.set_step_num(step+1)
-        return HTTPFound(location = self.request.url)
+        return HTTPFound(location = self.request.path_url)
 
     def previous_success(self, validated):
         step = self.get_step_num()
         self.set_step_state(step, validated)
         if step > 0:
             self.set_step_num(step-1)
-        return HTTPFound(location = self.request.url)
+        return HTTPFound(location = self.request.path_url)
 
     def previous_failure(self, e):
         step = self.get_step_num()
         if step > 0:
             self.set_step_num(step-1)
-        return HTTPFound(location = self.request.url)
+        return HTTPFound(location = self.request.path_url)
 
     def _get_wizard_data(self):
         wizdatas = self.request.session.setdefault('pyramid_deform.wizards', {})

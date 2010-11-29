@@ -1,3 +1,6 @@
-Next release
-------------
+0.1 (2010-11-28)
+----------------
+
+- Not-ready-for-primetime release for customer (not uploaded to PyPI).
+
 

@@ -1,3 +1,11 @@
+# get_step_num
+# get_step_states
+# clear
+# get_step_state
+# set_state
+# decrement_step
+# increment_step
+
 import unittest
 from pyramid import testing
 
@@ -101,43 +109,57 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(result, 'viewed')
 
     def test_show(self):
+        from pyramid_deform import WizardState
         form = DummyForm(None)
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
-        inst.request = DummyRequest()
+        request = DummyRequest()
+        inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
         result = inst.show(form)
         self.assertEqual(result, {'form': 'rendered'})
         self.assertEqual(form.appstruct, {})
 
     def test_next_success(self):
+        from pyramid_deform import WizardState
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
+        inst.schema_name = 'schema'
         result = inst.next_success({'one':'one'})
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['step'], 1)
         self.assertEqual(state['states'][0], {'one':'one'})
+        self.assertEqual(state['states']['schema'], {'one':'one'})
 
     def test_previous_success_at_step_zero(self):
+        from pyramid_deform import WizardState
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
+        inst.schema_name = 'schema'
         result = inst.previous_success({'one':'one'})
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['states'][0], {'one':'one'})
+        self.assertEqual(state['states']['schema'], {'one':'one'})
         self.failIf('step' in state)
 
     def test_previous_success_at_step_one(self):
+        from pyramid_deform import WizardState
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
+        inst.schema_name = 'schema'
         states = inst.request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'step':1}
         result = inst.previous_success({'one':'one'})
@@ -145,13 +167,16 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(result.location, 'http://example.com')
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['states'][1], {'one':'one'})
+        self.assertEqual(state['states']['schema'], {'one':'one'})
         self.assertEqual(state['step'], 0)
 
     def test_previous_failure_at_step_zero(self):
+        from pyramid_deform import WizardState
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
         result = inst.previous_failure(None)
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
@@ -159,10 +184,12 @@ class TestFormWizardView(unittest.TestCase):
         self.failIf('step' in state)
 
     def test_previous_failure_at_step_one(self):
+        from pyramid_deform import WizardState
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
         states = inst.request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'step':1}
         result = inst.previous_failure(None)
@@ -171,20 +198,22 @@ class TestFormWizardView(unittest.TestCase):
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['step'], 0)
 
+class TestWizardState(unittest.TestCase):
+    def _makeOne(self, request):
+        from pyramid_deform import WizardState
+        return WizardState(request, 'name')
+
     def test__get_wizard_data_no_existing_data(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
-        inst.request = request
+        inst = self._makeOne(request)
         data = inst._get_wizard_data()
         self.assertEqual(data, {})
         self.failUnless('name' in request.session['pyramid_deform.wizards'])
         self.failUnless(request.session._changed)
 
     def test__get_wizard_data_with_existing_data(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         state = {'abc':'123'}
         states = request.session['pyramid_deform.wizards'] = {}
         states['name'] = state
@@ -193,69 +222,63 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(data, state)
         self.failIf(request.session._changed)
 
-    def test_clear_wizard_data(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
+    def test_clear(self):
         request = DummyRequest()
+        inst = self._makeOne(request)
         state = {'abc':'123'}
         states = request.session['pyramid_deform.wizards'] = {}
         states['name'] = state
         inst.request = request
-        inst.clear_wizard_data()
+        inst.clear()
         self.assertEqual(request.session['pyramid_deform.wizards']['name'], {})
 
     def test_clear_get_step_num_from_params(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         request.GET['step'] = '1'
         inst.request = request
         self.assertEqual(inst.get_step_num(), 1)
 
     def test_clear_get_step_num_from_session(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         states = request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'step':'1'}
         inst.request = request
         self.assertEqual(inst.get_step_num(), 1)
 
     def test_set_step_num(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         inst.request = request
         inst.set_step_num(5)
         self.assertEqual(inst.get_step_num(), 5)
 
     def test_get_step_states(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         states = request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'states':'states', 'step':0}
         inst.request = request
         self.assertEqual(inst.get_step_states(), 'states')
 
     def test_get_step_state(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         states = request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'states':{0:'state'}, 'step':0}
         inst.request = request
         self.assertEqual(inst.get_step_state(), 'state')
 
     def test_set_step_state(self):
-        wizard = DummyFormWizard()
-        inst = self._makeOne(wizard)
         request = DummyRequest()
+        inst = self._makeOne(request)
         states = request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'states':{0:'state'}, 'step':0}
         inst.request = request
-        inst.set_step_state(0, 'state2')
+        inst.set_step_state(0, 'schema', 'state2')
         self.assertEqual(states['name']['states'][0], 'state2')
+        self.assertEqual(states['name']['states']['schema'], 'state2')
 
 class TestFormWizard(unittest.TestCase):
     def _makeOne(self, name, done, *schemas):
@@ -269,31 +292,6 @@ class TestFormWizard(unittest.TestCase):
         result = inst(request)
         self.assertEqual(result.wizard, inst)
 
-    def test_done_name_in_wizdata(self):
-        def done(request, validated):
-            return validated
-        inst = self._makeOne('name', done, 'schema1', 'schema2')
-        request = DummyRequest()
-        wizdata = {'foo':1}
-        data = request.session['pyramid_deform.wizards'] = {}
-        data['name'] = wizdata
-        validated = 'abc'
-        result = inst.done(request, validated)
-        self.assertEqual(result, validated)
-        self.assertEqual(data, {})
-        self.failUnless(request.session._changed)
-
-    def test_done_name_not_in_wizdata(self):
-        def done(request, validated):
-            return validated
-        inst = self._makeOne('name', done, 'schema1', 'schema2')
-        request = DummyRequest()
-        data = request.session['pyramid_deform.wizards'] = {}
-        validated = 'abc'
-        result = inst.done(request, validated)
-        self.assertEqual(result, validated)
-        self.assertEqual(data, {})
-        self.failIf(request.session._changed)
 
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
@@ -313,6 +311,7 @@ class DummyForm(object):
         return 'validated'
 
 class DummySchema(object):
+    name = 'schema'
     def bind(self, **kw):
         self.kw = kw
         return self

@@ -1,7 +1,8 @@
-Next release
-------------
+0.1.1 (2010-11-30)
+------------------
 
-- ...
+- Another not-ready-for-primetime customer release: refactor wizard state
+  mutation and allow wizard states to be retrieved by name.
  
 0.1 (2010-11-28)
 ----------------

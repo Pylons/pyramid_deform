@@ -300,16 +300,25 @@ class TestFormWizard(unittest.TestCase):
         summary = inst.get_summary(request)
         self.assertEqual(
             summary,
-            [{'url': 'http://example.com?step=0',
-              'desc': 'desc',
+            [{'current': True,
               'num': 0,
+              'last': False,
               'name': 'schema',
-              'title': 'title'},
-             {'url': 'http://example.com?step=1',
-              'desc': 'desc',
+              'title': 'title',
+              'url': 'http://example.com?step=0',
+              'first': True,
+              'class': 'first hilight',
+              'desc': 'desc'},
+             {'current': False,
               'num': 1,
+              'last': True,
               'name': 'schema',
-              'title': 'title'}])
+              'title': 'title',
+              'url': 'http://example.com?step=1',
+              'first': False,
+              'class': 'last',
+              'desc': 'desc'}
+             ])
         
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):

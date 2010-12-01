@@ -196,13 +196,30 @@ class FormWizard(object):
 
     def get_summary(self, request):
         result = []
+        state = WizardState(request, self.name)
+        step = state.get_step_num()
+        last = len(self.schemas) - 1
         for num, schema in enumerate(self.schemas):
+            classes = []
+            is_first = num == 0
+            is_last = num == last
+            is_current = num == step
+            if is_first:
+                classes.append('first')
+            if is_last:
+                classes.append('last')
+            if is_current:
+                classes.append('hilight')
             result.append({
                 'num':num,
                 'name':schema.name,
                 'title':schema.title,
                 'desc':schema.description,
+                'current':step == num,
                 'url':request.path_url + '?step=%s' % num,
+                'first':is_first,
+                'last':is_last,
+                'class':' '.join(classes),
                 })
         return result
 

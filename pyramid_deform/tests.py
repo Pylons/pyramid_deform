@@ -292,7 +292,25 @@ class TestFormWizard(unittest.TestCase):
         result = inst(request)
         self.assertEqual(result.wizard, inst)
 
-
+    def test_get_summary(self):
+        schema1 = DummySchema()
+        schema2 = DummySchema()
+        inst = self._makeOne('name', None, schema1, schema2)
+        request = DummyRequest()
+        summary = inst.get_summary(request)
+        self.assertEqual(
+            summary,
+            [{'url': 'http://example.com?step=0',
+              'desc': 'desc',
+              'num': 0,
+              'name': 'schema',
+              'title': 'title'},
+             {'url': 'http://example.com?step=1',
+              'desc': 'desc',
+              'num': 1,
+              'name': 'schema',
+              'title': 'title'}])
+        
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
         self.schema = schema
@@ -312,6 +330,9 @@ class DummyForm(object):
 
 class DummySchema(object):
     name = 'schema'
+    description = 'desc'
+    title = 'title'
+    
     def bind(self, **kw):
         self.kw = kw
         return self

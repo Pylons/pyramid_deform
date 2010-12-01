@@ -193,3 +193,16 @@ class FormWizard(object):
         view = self.form_wizard_view_class(self)
         result = view(request)
         return result
+
+    def get_summary(self, request):
+        result = []
+        for num, schema in enumerate(self.schemas):
+            result.append({
+                'num':num,
+                'name':schema.name,
+                'title':schema.title,
+                'desc':schema.description,
+                'url':request.path_url + '?step=%s' % num,
+                })
+        return result
+

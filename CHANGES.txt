@@ -1,5 +1,5 @@
-Next release
-------------
+0.1.4 (2010-12-17)
+------------------
 
 - Make it possible for schemas to have a ``prev_ok`` and ``next_ok``
   attribute, which should be callables.  If either returns ``False``, the

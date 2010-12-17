@@ -1,7 +1,9 @@
 Next release
 ------------
 
-- ...
+- Make it possible for schemas to have a ``prev_ok`` and ``next_ok``
+  attribute, which should be callables.  If either returns ``False``, the
+  corresponding button on the form will be disabled (requires deform>=0.8.1).
 
 0.1.3 (2010-12-02)
 ------------------

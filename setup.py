@@ -22,7 +22,10 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
-install_requires = ['pyramid', 'deform']
+install_requires = [
+    'pyramid',
+    'deform>=0.8.1' # button disabled arg
+    ]
 
 setup(name='pyramid_deform',
       version=__version__,

@@ -146,12 +146,31 @@ class FormWizardView(object):
         form_view.schema = schema
         self.schema_name = schema.name
         buttons = []
+
+        prev_disabled = False
+        next_disabled = False
+
+        if hasattr(schema, 'prev_ok'):
+            prev_disabled = not schema.prev_ok(request)
+
+        if hasattr(schema, 'next_ok'):
+            next_disabled = not schema.next_ok(request)
+
+        prev_button = Button(name='previous', title='Previous',
+                             disabled=prev_disabled)
+        next_button = Button(name='next', title='Next',
+                             disabled=next_disabled)
+        done_button = Button(name='next', title='Done',
+                             disabled=next_disabled)
+
         if step > 0:
-            buttons.append(Button(name='previous', title='Previous'))
+            buttons.append(prev_button)
+
         if step < len(self.wizard.schemas)-1:
-            buttons.append(Button(name='next', title='Next'))
+            buttons.append(next_button)
         else:
-            buttons.append(Button(name='next', title='Done'))
+            buttons.append(done_button)
+
         form_view.buttons = buttons
         form_view.next_success = self.next_success
         form_view.previous_success = self.previous_success

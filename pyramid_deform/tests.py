@@ -108,6 +108,26 @@ class TestFormWizardView(unittest.TestCase):
         result = inst(request)
         self.assertEqual(result, 'viewed')
 
+    def test___call__prev_not_ok(self):
+        schema = DummySchema()
+        schema.prev_ok = lambda *arg: False
+        wizard = DummyFormWizard(schema)
+        inst = self._makeOne(wizard)
+        inst.form_view_class = DummyFormView
+        request = DummyRequest()
+        result = inst(request)
+        self.assertEqual(result, 'viewed')
+
+    def test___call__next_not_ok(self):
+        schema = DummySchema()
+        schema.next_ok = lambda *arg: False
+        wizard = DummyFormWizard(schema)
+        inst = self._makeOne(wizard)
+        inst.form_view_class = DummyFormView
+        request = DummyRequest()
+        result = inst(request)
+        self.assertEqual(result, 'viewed')
+
     def test_show(self):
         from pyramid_deform import WizardState
         form = DummyForm(None)

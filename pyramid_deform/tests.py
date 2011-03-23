@@ -140,6 +140,20 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(result, {'form': 'rendered'})
         self.assertEqual(form.appstruct, {})
 
+    def test_show_with_deserialize(self):
+        from pyramid_deform import WizardState
+        form = DummyForm(None)
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        request = DummyRequest()
+        inst.request = request
+        inst.schema = DummySchema()
+        inst.schema.wizard_serializer = lambda *arg: DummySerializer('state2')
+        inst.wizard_state = WizardState(request, 'name')
+        result = inst.show(form)
+        self.assertEqual(result, {'form': 'rendered'})
+        self.assertEqual(form.appstruct, 'state2')
+
     def test_next_success(self):
         from pyramid_deform import WizardState
         wizard = DummyFormWizard()
@@ -147,7 +161,7 @@ class TestFormWizardView(unittest.TestCase):
         request = DummyRequest()
         inst.request = request
         inst.wizard_state = WizardState(request, 'name')
-        inst.schema_name = 'schema'
+        inst.schema = DummySchema()
         result = inst.next_success({'one':'one'})
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
@@ -156,6 +170,23 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(state['states'][0], {'one':'one'})
         self.assertEqual(state['states']['schema'], {'one':'one'})
 
+    def test_next_success_with_serializer(self):
+        from pyramid_deform import WizardState
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        request = DummyRequest()
+        inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
+        inst.schema = DummySchema()
+        inst.schema.wizard_serializer = lambda *arg: DummySerializer('state2')
+        result = inst.next_success({'one':'one'})
+        self.assertEqual(result.status, '302 Found')
+        self.assertEqual(result.location, 'http://example.com')
+        state = request.session['pyramid_deform.wizards']['name']
+        self.assertEqual(state['step'], 1)
+        self.assertEqual(state['states'][0], 'state2')
+        self.assertEqual(state['states']['schema'], 'state2')
+
     def test_previous_success_at_step_zero(self):
         from pyramid_deform import WizardState
         wizard = DummyFormWizard()
@@ -163,7 +194,7 @@ class TestFormWizardView(unittest.TestCase):
         request = DummyRequest()
         inst.request = request
         inst.wizard_state = WizardState(request, 'name')
-        inst.schema_name = 'schema'
+        inst.schema = DummySchema()
         result = inst.previous_success({'one':'one'})
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
@@ -179,7 +210,7 @@ class TestFormWizardView(unittest.TestCase):
         request = DummyRequest()
         inst.request = request
         inst.wizard_state = WizardState(request, 'name')
-        inst.schema_name = 'schema'
+        inst.schema = DummySchema()
         states = inst.request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'step':1}
         result = inst.previous_success({'one':'one'})
@@ -190,12 +221,29 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(state['states']['schema'], {'one':'one'})
         self.assertEqual(state['step'], 0)
 
+    def test_previous_success_with_serializer(self):
+        from pyramid_deform import WizardState
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        request = DummyRequest()
+        inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
+        inst.schema = DummySchema()
+        inst.schema.wizard_serializer = lambda *arg:DummySerializer('state2')
+        result = inst.previous_success({'one':'one'})
+        self.assertEqual(result.status, '302 Found')
+        self.assertEqual(result.location, 'http://example.com')
+        state = request.session['pyramid_deform.wizards']['name']
+        self.assertEqual(state['states'][0], 'state2')
+        self.assertEqual(state['states']['schema'], 'state2')
+
     def test_previous_failure_at_step_zero(self):
         from pyramid_deform import WizardState
         wizard = DummyFormWizard()
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.schema = DummySchema()
         inst.wizard_state = WizardState(request, 'name')
         result = inst.previous_failure(None)
         self.assertEqual(result.status, '302 Found')
@@ -209,6 +257,7 @@ class TestFormWizardView(unittest.TestCase):
         inst = self._makeOne(wizard)
         request = DummyRequest()
         inst.request = request
+        inst.schema = DummySchema()
         inst.wizard_state = WizardState(request, 'name')
         states = inst.request.session['pyramid_deform.wizards'] = {}
         states['name'] = {'step':1}
@@ -218,6 +267,33 @@ class TestFormWizardView(unittest.TestCase):
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['step'], 0)
 
+    def test_get_schema_serializer_no_serializer(self):
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        inst.schema = DummySchema()
+        self.assertEqual(inst.get_schema_serializer(), None)
+
+    def test_get_schema_serializer(self):
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        inst.schema = DummySchema()
+        inst.schema.wizard_serializer = lambda schema: '123'
+        self.assertEqual(inst.get_schema_serializer(), '123')
+
+    def test_deserialize(self):
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        inst.schema = DummySchema()
+        inst.schema.wizard_serializer = lambda *arg: DummySerializer('state2')
+        self.assertEqual(inst.deserialize('state'), 'state2')
+        
+    def test_serialize(self):
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        inst.schema = DummySchema()
+        inst.schema.wizard_serializer = lambda *arg: DummySerializer('state2')
+        self.assertEqual(inst.serialize('state'), 'state2')
+        
 class TestWizardState(unittest.TestCase):
     def _makeOne(self, request):
         from pyramid_deform import WizardState
@@ -403,3 +479,12 @@ class DummyFormView(object):
         return 'viewed'
         
 
+class DummySerializer(object):
+    def __init__(self, result):
+        self.result = result
+
+    def deserialize(self, state):
+        return self.result
+
+    def serialize(self, state):
+        return self.result

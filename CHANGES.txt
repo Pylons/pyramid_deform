@@ -1,3 +1,9 @@
+0.1.5 (2010-03-23)
+------------------
+
+- Respect a ``wizard_serializer`` attribute of a schema to allow for munging
+  of the validated data before it is pickled and after it is unpickled.
+
 0.1.4 (2010-12-17)
 ------------------
 

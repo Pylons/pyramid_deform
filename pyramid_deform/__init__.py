@@ -127,6 +127,7 @@ class FormWizardView(object):
 
     form_view_class = FormView
     wizard_state_class = WizardState
+    schema = None
 
     def __init__(self, wizard):
         self.wizard = wizard
@@ -143,8 +144,8 @@ class FormWizardView(object):
             return result
         form_view = self.form_view_class(request)
         schema = self.wizard.schemas[step]
-        form_view.schema = schema
-        self.schema_name = schema.name
+        self.schema = schema.bind(request=request)
+        form_view.schema = self.schema
         buttons = []
 
         prev_disabled = False
@@ -179,19 +180,39 @@ class FormWizardView(object):
         result = form_view()
         return result
 
+    def get_schema_serializer(self):
+        serializer = getattr(self.schema, 'wizard_serializer', None)
+        if serializer is not None:
+            return serializer(self.schema)
+        return None
+
+    def deserialize(self, state):
+        serializer = self.get_schema_serializer()
+        if serializer is not None:
+            state = serializer.deserialize(state)
+        return state 
+
+    def serialize(self, state):
+        serializer = self.get_schema_serializer()
+        if serializer is not None:
+            state = serializer.serialize(state)
+        return state
+
     def show(self, form):
         state = self.wizard_state.get_step_state()
-        return {
-            'form':form.render(appstruct=state)
-            }
+        state = self.deserialize(state)
+        result = dict(form=form.render(appstruct=state))
+        return result
 
     def next_success(self, validated):
-        self.wizard_state.set_state(self.schema_name, validated)
+        validated = self.serialize(validated)
+        self.wizard_state.set_state(self.schema.name, validated)
         self.wizard_state.increment_step()
         return HTTPFound(location = self.request.path_url)
 
     def previous_success(self, validated):
-        self.wizard_state.set_state(self.schema_name, validated)
+        validated = self.serialize(validated)
+        self.wizard_state.set_state(self.schema.name, validated)
         self.wizard_state.decrement_step()
         return HTTPFound(location = self.request.path_url)
 

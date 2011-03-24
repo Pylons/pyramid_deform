@@ -1,10 +1,10 @@
-Next release
-------------
+0.1.6 (2011-03-24)
+------------------
 
 - Allow wizard schemas to have an "appstruct" attribute; these are used
   for wizard edit forms.
 
-0.1.5 (2010-03-23)
+0.1.5 (2011-03-23)
 ------------------
 
 - Respect a ``wizard_serializer`` attribute of a schema to allow for munging

@@ -16,9 +16,9 @@ class FormView(object):
     def __call__(self):
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '')
-        schema = self.schema.bind(request=self.request)
-        form = self.form_class(schema, buttons=self.buttons, use_ajax=use_ajax,
-                               ajax_options=ajax_options)
+        self.schema = self.schema.bind(request=self.request)
+        form = self.form_class(self.schema, buttons=self.buttons,
+                               use_ajax=use_ajax, ajax_options=ajax_options)
         self.before(form)
         reqts = form.get_widget_resources()
         result = None
@@ -99,10 +99,12 @@ class WizardState(object):
         states = wizdata.setdefault('states', {})
         return states
 
-    def get_step_state(self):
+    def get_step_state(self, default=None):
+        if default is None:
+            default = {}
         states = self.get_step_states()
         step = self.get_step_num()
-        return states.get(step, {})
+        return states.get(step, default)
 
     def set_step_state(self, num, name, state):
         states = self.get_step_states()
@@ -177,6 +179,7 @@ class FormWizardView(object):
         form_view.previous_success = self.previous_success
         form_view.previous_failure = self.previous_failure
         form_view.show = self.show
+        form_view.appstruct = getattr(schema, 'appstruct', None)
         result = form_view()
         return result
 
@@ -199,7 +202,8 @@ class FormWizardView(object):
         return state
 
     def show(self, form):
-        state = self.wizard_state.get_step_state()
+        appstruct = getattr(self.schema, 'appstruct', None)
+        state = self.wizard_state.get_step_state(appstruct)
         state = self.deserialize(state)
         result = dict(form=form.render(appstruct=state))
         return result
@@ -226,8 +230,8 @@ class FormWizard(object):
     
     def __init__(self, name, done, *schemas):
         self.name = name
-        self.schemas = schemas
         self.done = done
+        self.schemas = schemas
 
     def __call__(self, request):
         view = self.form_wizard_view_class(self)

@@ -1,3 +1,9 @@
+Next release
+------------
+
+- Allow wizard schemas to have an "appstruct" attribute; these are used
+  for wizard edit forms.
+
 0.1.5 (2010-03-23)
 ------------------
 

@@ -140,6 +140,21 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(result, {'form': 'rendered'})
         self.assertEqual(form.appstruct, {})
 
+    def test_show_with_appstruct(self):
+        from pyramid_deform import WizardState
+        form = DummyForm(None)
+        wizard = DummyFormWizard()
+        inst = self._makeOne(wizard)
+        class DummySchemaWithAppstruct(object):
+            appstruct = {'1':'2'}
+        inst.schema = DummySchemaWithAppstruct()
+        request = DummyRequest()
+        inst.request = request
+        inst.wizard_state = WizardState(request, 'name')
+        result = inst.show(form)
+        self.assertEqual(result, {'form': 'rendered'})
+        self.assertEqual(form.appstruct, {'1':'2'})
+
     def test_show_with_deserialize(self):
         from pyramid_deform import WizardState
         form = DummyForm(None)
@@ -365,6 +380,13 @@ class TestWizardState(unittest.TestCase):
         states['name'] = {'states':{0:'state'}, 'step':0}
         inst.request = request
         self.assertEqual(inst.get_step_state(), 'state')
+
+    def test_get_step_state_nondefault(self):
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        request.session['pyramid_deform.wizards'] = {}
+        inst.request = request
+        self.assertEqual(inst.get_step_state('123'), '123')
 
     def test_set_step_state(self):
         request = DummyRequest()

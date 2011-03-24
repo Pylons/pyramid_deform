@@ -1,3 +1,10 @@
+Next release
+------------
+
+- Fix syntax error in javascript when ajax_options are not specified. Use a 
+  string representing an empty javascript object as the default for 
+  ajax_options.
+
 0.1.6 (2011-03-24)
 ------------------
 

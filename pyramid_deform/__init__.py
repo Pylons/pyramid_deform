@@ -15,7 +15,7 @@ class FormView(object):
 
     def __call__(self):
         use_ajax = getattr(self, 'use_ajax', False)
-        ajax_options = getattr(self, 'ajax_options', '')
+        ajax_options = getattr(self, 'ajax_options', '{}')
         self.schema = self.schema.bind(request=self.request)
         form = self.form_class(self.schema, buttons=self.buttons,
                                use_ajax=use_ajax, ajax_options=ajax_options)

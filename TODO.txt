@@ -1,0 +1,1 @@
+- Don't duplicate state by name and number in wizard state data.

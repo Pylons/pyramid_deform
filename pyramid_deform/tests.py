@@ -437,6 +437,35 @@ class TestFormWizard(unittest.TestCase):
               'class': 'last',
               'desc': 'desc'}
              ])
+
+class TestCRSFSchema(unittest.TestCase):
+    def _getTargetClass(self):
+        from pyramid_deform import CSRFSchema
+        return CSRFSchema
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
+    def test_validate_failure(self):
+        from colander import Invalid
+        inst = self._makeOne()
+        request = DummyRequest()
+        inst2 = inst.bind(request=request)
+        self.assertRaises(Invalid, inst2.deserialize, {'csrf_token':''})
+
+    def test_validate_missing(self):
+        from colander import Invalid
+        inst = self._makeOne()
+        request = DummyRequest()
+        inst2 = inst.bind(request=request)
+        self.assertRaises(Invalid, inst2.deserialize, {})
+
+    def test_validate_success(self):
+        inst = self._makeOne()
+        request = DummyRequest()
+        inst2 = inst.bind(request=request)
+        self.assertEqual(inst2.deserialize({'csrf_token':'csrf_token'}),
+                         {'csrf_token': 'csrf_token'})
         
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
@@ -487,6 +516,9 @@ class DummySession(dict):
     _changed = False
     def changed(self):
         self._changed = True
+
+    def get_csrf_token(self):
+        return 'csrf_token'
 
 class DummyRequest(testing.DummyRequest):
     def __init__(self, *arg, **kw):

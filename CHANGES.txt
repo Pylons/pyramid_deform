@@ -5,6 +5,8 @@ Next release
   string representing an empty javascript object as the default for 
   ajax_options.
 
+- Add CSRFSchema class API.
+
 0.1.6 (2011-03-24)
 ------------------
 

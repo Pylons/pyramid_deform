@@ -13,8 +13,15 @@ Install using setuptools, e.g. (within a virtualenv)::
 
 Usage
 -----
-
 XXX
+
+CSRF Schema
+-----------
+::
+    >>> class LoginSchema(CSRFSchema):
+    >>>     pass
+    >>> schema = LoginSchema.get_schema(self.request)
+
 
 Reporting Bugs / Development Versions
 -------------------------------------

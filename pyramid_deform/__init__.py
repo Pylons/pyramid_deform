@@ -15,7 +15,8 @@ class FormView(object):
     buttons = ()
     schema = None
 
-    def __init__(self, request):
+    def __init__(self, context, request):
+        self.context = context
         self.request = request
 
     def __call__(self):

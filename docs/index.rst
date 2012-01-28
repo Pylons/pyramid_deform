@@ -29,7 +29,7 @@ Consider this `colander
           widget=TextAreaWidget(cols=40, rows=5),
           missing=u"",
           )
-      body = colander.SchemaNode(
+      body = SchemaNode(
           String(),
           widget=RichTextWidget(),
           missing=u"",
@@ -47,9 +47,10 @@ this:
       buttons = ('save',)
 
       def save_success(self, appstruct):
-          self.context.title = appstruct['title']
-          self.context.description = appstruct['description']
-          self.context.body = appstruct['body']
+          context = self.context.request
+          context.title = appstruct['title']
+          context.description = appstruct['description']
+          context.body = appstruct['body']
           self.request.session.flash(u"Your changes have been saved.")
           return HTTPFound(location=self.request.path_url)
 
@@ -57,8 +58,8 @@ Note that ``save_success`` is only called when the form input
 validates.  E.g. it's not called when the ``title`` is left blank, as
 it's a required field.
 
-This view is then registered like any other Pyramid view.  Maybe like
-this:
+The ``PageEditView`` is registered like any other Pyramid view.  Maybe
+like this:
 
 .. code-block:: python
 

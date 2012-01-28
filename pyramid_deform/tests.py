@@ -14,11 +14,9 @@ class TestFormView(unittest.TestCase):
         from pyramid_deform import FormView
         return FormView
         
-    def _makeOne(self, request, context=None):
+    def _makeOne(self, request):
         klass = self._getTargetClass()
-        if context is None:
-            context = DummyContext()
-        inst = klass(context, request)
+        inst = klass(request)
         return inst
 
     def test___call__show(self):
@@ -90,10 +88,8 @@ class TestFormView(unittest.TestCase):
                          {'css_links': (), 'js_links': (), 'form': 'failure'})
 
     def test___init__(self):
-        context = DummyContext()
         request = DummyRequest()
-        inst = self._makeOne(request, context)
-        self.assert_(inst.context is context)
+        inst = self._makeOne(request)
         self.assert_(inst.request is request)
 
 class TestFormWizardView(unittest.TestCase):

@@ -1,6 +1,8 @@
 Next release
 ------------
 
+- Add usage example for FormView class.
+
 - Fix syntax error in javascript when ajax_options are not specified. Use a 
   string representing an empty javascript object as the default for 
   ajax_options.

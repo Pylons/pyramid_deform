@@ -1,6 +1,11 @@
 Next release
 ------------
 
+- Add 'context' argument to ``FormView.__init__``.  This will allow
+  edit form success handlers to access the context.
+
+- Added usage example for FormView.
+
 - Fix syntax error in javascript when ajax_options are not specified. Use a 
   string representing an empty javascript object as the default for 
   ajax_options.

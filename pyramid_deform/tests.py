@@ -87,6 +87,11 @@ class TestFormView(unittest.TestCase):
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'failure'})
 
+    def test___init__(self):
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        self.assert_(inst.request is request)
+
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):
         from pyramid_deform import FormWizardView
@@ -524,6 +529,9 @@ class DummyRequest(testing.DummyRequest):
     def __init__(self, *arg, **kw):
         testing.DummyRequest.__init__(self, *arg, **kw)
         self.session = DummySession()
+
+class DummyContext(object):
+    pass
     
 class DummyFormView(object):
     def __init__(self, request):

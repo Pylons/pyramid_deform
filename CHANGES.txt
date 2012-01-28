@@ -1,5 +1,7 @@
-Next release
-------------
+0.2a2 (2012-01-29)
+------------------
+
+- Fix broken release which didn't include all files.
 
 0.2a1 (2012-01-28)
 ------------------

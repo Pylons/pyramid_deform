@@ -1,5 +1,7 @@
-Next release
-------------
+0.2a1 (2012-01-28)
+------------------
+
+- This is an alpha release solely because documentation is incomplete.
 
 - Add usage example for FormView class.
 

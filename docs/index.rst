@@ -83,7 +83,7 @@ something like this:
     <body>
       <h1>Edit ${context.title}</h1>
       <form tal:replace="structure form" />
-    </div>
+    </body>
   </html>
 
 Wizard

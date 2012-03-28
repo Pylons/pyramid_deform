@@ -317,3 +317,7 @@ class CSRFSchema(colander.Schema):
         validator=deferred_csrf_validator,
         )
 
+
+def includeme(config):
+    config.add_translation_dirs('deform:locale/', 'colander:locale/')
+    return config

@@ -66,7 +66,7 @@ You can then write a ``PageEditView`` using
   from pyramid_deform import FormView
 
   class PageEditView(FormView):
-      schema = PageSchema
+      schema = PageSchema()
       buttons = ('save',)
 
       def save_success(self, appstruct):
@@ -102,7 +102,7 @@ something like this::
     <body>
       <h1>Edit ${context.title}</h1>
       <form tal:replace="structure form" />
-    </div>
+    </body>
   </html>
 
 Wizard

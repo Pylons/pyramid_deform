@@ -1,8 +1,8 @@
 Unreleased
 ----------
 
-Next release
-------------
+0.2a3 (2012-03-30)
+------------------
 
 - Add ``includeme`` hook for automatic configuration of translations
   and configuration of additional template search paths for the ZPT

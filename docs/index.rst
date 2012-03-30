@@ -42,7 +42,9 @@ FormView Usage
 --------------
 
 Consider this `colander
-<http://docs.pylonsproject.org/projects/colander/en/latest/>`_ schema::
+<http://docs.pylonsproject.org/projects/colander/en/latest/>`_ schema:
+
+.. code-block:: python
 
   from colander import Schema, SchemaNode, String
   from deform.widget import RichTextWidget, TextAreaWidget
@@ -61,7 +63,9 @@ Consider this `colander
           )
 
 You can then write a ``PageEditView`` using
-``pyramid_deform.FormView`` like this::
+``pyramid_deform.FormView`` like this:
+
+.. code-block:: python
 
   from pyramid_deform import FormView
 
@@ -82,7 +86,9 @@ validates.  E.g. it's not called when the ``title`` is left blank, as
 it's a required field.
 
 The ``PageEditView`` is registered like any other Pyramid view.  Maybe
-like this::
+like this:
+
+.. code-block:: python
 
   from myapp.resources import Page
 

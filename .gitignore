@@ -4,3 +4,7 @@
 dist/
 env26/
 .coverage
+bin/
+include/
+lib/
+local

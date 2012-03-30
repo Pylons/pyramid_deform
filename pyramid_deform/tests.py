@@ -7,6 +7,9 @@
 # increment_step
 
 import unittest
+
+from mock import patch
+from mock import Mock
 from pyramid import testing
 
 class TestFormView(unittest.TestCase):
@@ -532,7 +535,6 @@ class DummyFormView(object):
     def __call__(self):
         return 'viewed'
         
-
 class DummySerializer(object):
     def __init__(self, result):
         self.result = result
@@ -542,3 +544,54 @@ class DummySerializer(object):
 
     def serialize(self, state):
         return self.result
+
+class TestConfigureZPTRenderer(unittest.TestCase):
+    @patch('deform.form.Form')
+    def test_translator(self, Form):
+        from pyramid_deform import translator
+        from pyramid_deform import configure_zpt_renderer
+
+        configure_zpt_renderer()
+        assert Form.default_renderer.translate is translator
+
+    @patch('deform.form.Form')
+    def test_search_path(self, Form):
+        from pyramid_deform import configure_zpt_renderer
+
+        search_path_before = ('search-path-before',)
+        Form.default_renderer.loader.search_path = search_path_before
+        configure_zpt_renderer(['deform:templates'])
+
+        search_path = Form.default_renderer.loader.search_path
+        assert len(Form.default_renderer.loader.search_path) == 2
+        assert (search_path[-1],) == search_path_before
+        assert search_path[0].endswith('deform/templates')
+
+class TestIncludeMe(unittest.TestCase):
+    @patch('pyramid_deform.configure_zpt_renderer')
+    @patch('deform.form.Form')
+    def test_default(self, Form, configure_zpt_renderer):
+        from pyramid_deform import includeme
+
+        config = Mock()
+        config.registry.settings = {}
+        includeme(config)
+
+        assert config.add_translation_dirs.call_count == 1
+        assert config.add_static_view.call_count == 1
+        configure_zpt_renderer.assert_called_with([])
+
+    @patch('pyramid_deform.configure_zpt_renderer')
+    @patch('deform.form.Form')
+    def test_template_search_path(self, Form, configure_zpt_renderer):
+        from pyramid_deform import includeme
+
+        config = Mock()
+        config.registry.settings = {
+            'pyramid_deform.template_search_path': 'this-path',
+            }
+        includeme(config)
+
+        assert config.add_translation_dirs.call_count == 1
+        assert config.add_static_view.call_count == 1
+        configure_zpt_renderer.assert_called_with(['this-path'])

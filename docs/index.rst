@@ -11,13 +11,38 @@ Install using setuptools, e.g. (within a virtualenv)::
 
   $ easy_install pyramid_deform
 
+Configuring translations
+------------------------
+
+pyramid_deform provides an ``includeme`` hook that will set up
+translation paths so that the translations for deform and colander are
+registered.  To use this in your project, add ``pyramid_deform`` to
+the ``pyramid.includes`` in your PasteDeploy configuration file.  An
+example::
+
+  [myapp:main]
+  ...
+  pyramid.includes = pyramid_debugtoolbar pyramid_tm pyramid_deform
+
+Configuring template search paths
+---------------------------------
+
+pyramid_deform allows you to add template search paths in the
+configuration.  An example::
+
+  [myapp:main]
+  ...
+  pyramid_deform.template_search_path = myapp:templates/deform
+
+Thus, if you put a ``form.pt`` into your application's
+``templates/deform`` directory, that will override deform's default
+``form.pt``.
+
 FormView Usage
 --------------
 
 Consider this `colander
-<http://docs.pylonsproject.org/projects/colander/en/latest/>`_ schema:
-
-.. code-block:: python
+<http://docs.pylonsproject.org/projects/colander/en/latest/>`_ schema::
 
   from colander import Schema, SchemaNode, String
   from deform.widget import RichTextWidget, TextAreaWidget
@@ -36,9 +61,7 @@ Consider this `colander
           )
 
 You can then write a ``PageEditView`` using
-``pyramid_deform.FormView`` like this:
-
-.. code-block:: python
+``pyramid_deform.FormView`` like this::
 
   from pyramid_deform import FormView
 
@@ -59,9 +82,7 @@ validates.  E.g. it's not called when the ``title`` is left blank, as
 it's a required field.
 
 The ``PageEditView`` is registered like any other Pyramid view.  Maybe
-like this:
-
-.. code-block:: python
+like this::
 
   from myapp.resources import Page
 
@@ -75,9 +96,7 @@ like this:
 
 Your template in ``myapp:templates/form.pt`` will receive ``form`` as
 a variable: this is the rendered form.  Your template might look
-something like this:
-
-.. code-block:: html
+something like this::
 
   <html>
     <body>

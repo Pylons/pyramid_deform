@@ -1,6 +1,13 @@
 Unreleased
 ----------
 
+Next release
+------------
+
+- Add ``includeme`` hook for automatic configuration of translations
+  and configuration of additional template search paths for the ZPT
+  renderer through the INI file.
+
 0.2a2 (2012-01-29)
 ------------------
 

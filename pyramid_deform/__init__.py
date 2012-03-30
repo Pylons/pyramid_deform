@@ -1,3 +1,5 @@
+from pkg_resources import resource_filename
+
 import colander
 import deform
 import deform.form
@@ -6,7 +8,9 @@ import deform.widget
 from deform.form import Button
 
 from pyramid.httpexceptions import HTTPFound
+from pyramid.i18n import get_localizer
 from pyramid.i18n import TranslationStringFactory
+from pyramid.threadlocal import get_current_request
 
 _ = TranslationStringFactory('pyramid_deform')
 
@@ -272,7 +276,6 @@ class FormWizard(object):
                 })
         return result
 
-
 @colander.deferred
 def deferred_csrf_value(node, kw):
     return kw['request'].session.get_csrf_token()
@@ -284,7 +287,6 @@ def deferred_csrf_validator(node, kw):
             raise colander.Invalid(node,
                                    _('Invalid cross-site scripting token'))
     return csrf_validate
-
 
 class CSRFSchema(colander.Schema):
     """
@@ -317,3 +319,28 @@ class CSRFSchema(colander.Schema):
         validator=deferred_csrf_validator,
         )
 
+def translator(term):
+    request = get_current_request()
+    if request is not None:
+        return get_localizer(request).translate(term)
+    else:
+        return term.interpolate() if hasattr(term, 'interpolate') else term
+
+def configure_zpt_renderer(search_path=()):
+    default_paths = deform.form.Form.default_renderer.loader.search_path
+    paths = []
+    for path in search_path:
+        pkg, resource_name = path.split(':')
+        paths.append(resource_filename(pkg, resource_name))
+    deform.form.Form.default_renderer = deform.ZPTRendererFactory(
+        tuple(paths) + default_paths, translator=translator)
+
+def includeme(config):
+    settings = config.registry.settings
+    search_path = settings.get(
+        'pyramid_deform.template_search_path', '').strip()
+
+    config.add_translation_dirs('colander:locale', 'deform:locale')
+    config.add_static_view('static-deform', 'deform:static')
+
+    configure_zpt_renderer(search_path.split())

@@ -109,7 +109,7 @@ something like this::
     <!-- JavaScript -->
     <tal:block repeat="reqt js_links|[]">
       <script type="text/javascript"
-              src="${request.static_url('deform:static/%s' % reqt')}"
+              src="${request.static_url('deform:static/%s' % reqt)}"
        ></script>
     </tal:block>
     </head>

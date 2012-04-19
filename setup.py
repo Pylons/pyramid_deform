@@ -27,9 +27,9 @@ install_requires = [
     'deform>=0.8.1' # button disabled arg
     ]
 
-tests_require = [
-    'mock',
-    ]
+tests_require = ['nose', 'coverage', 'Mock']
+
+docs_extras = ['Sphinx']
 
 setup(name='pyramid_deform',
       version=__version__,
@@ -52,9 +52,10 @@ setup(name='pyramid_deform',
       tests_require = tests_require,
       install_requires = install_requires,
       test_suite="pyramid_deform",
+      extras_require = {
+          'testing':tests_require,
+          'docs':docs_extras,
+          },
       entry_points = """\
       """,
-      extras_require = {
-          'testing': tests_require,
-          },
       )

@@ -47,7 +47,7 @@ You can then write a ``PageEditView`` using
       buttons = ('save',)
 
       def save_success(self, appstruct):
-          context = self.context.request
+          context = self.request.context
           context.title = appstruct['title']
           context.description = appstruct['description']
           context.body = appstruct['body']

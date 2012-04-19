@@ -14,11 +14,11 @@ Install using setuptools, e.g. (within a virtualenv)::
 Configuring translations
 ------------------------
 
-pyramid_deform provides an ``includeme`` hook that will set up
-translation paths so that the translations for deform and colander are
-registered.  To use this in your project, add ``pyramid_deform`` to
-the ``pyramid.includes`` in your PasteDeploy configuration file.  An
-example::
+pyramid_deform provides an ``includeme`` hook that will set up translation
+paths so that the translations for deform and colander are registered.  It
+also adds a Pyramid static view for the deform JavaScript and CSS resources.
+To use this in your project, add ``pyramid_deform`` to the
+``pyramid.includes`` in your PasteDeploy configuration file.  An example::
 
   [myapp:main]
   ...
@@ -99,6 +99,20 @@ a variable: this is the rendered form.  Your template might look
 something like this::
 
   <html>
+    <head>
+    <!-- CSS -->
+    <tal:block repeat="reqt css_links|[]">
+      <link rel="stylesheet" 
+            href="${request.static_url('deform:static/%s' % reqt')}" 
+            type="text/css" />
+    </tal:block>
+    <!-- JavaScript -->
+    <tal:block repeat="reqt js_links|[]">
+      <script type="text/javascript"
+              src="${request.static_url('deform:static/%s' % reqt')}"
+       ></script>
+    </tal:block>
+    </head>
     <body>
       <h1>Edit ${context.title}</h1>
       <form tal:replace="structure form" />

@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.2'
+__version__ = '0.2a4dev'
 
 import os
 
@@ -25,6 +25,10 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 install_requires = [
     'pyramid',
     'deform>=0.8.1' # button disabled arg
+    ]
+
+tests_require = [
+    'mock',
     ]
 
 setup(name='pyramid_deform',
@@ -45,10 +49,12 @@ setup(name='pyramid_deform',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      tests_require = install_requires,
+      tests_require = tests_require,
       install_requires = install_requires,
       test_suite="pyramid_deform",
       entry_points = """\
-      """
+      """,
+      extras_require = {
+          'testing': tests_require,
+          },
       )
-

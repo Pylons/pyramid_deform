@@ -1,6 +1,10 @@
 Next release
 ------------
 
+- Add ``SessionFileUploadTempStore`` (a Deform FileUploadTempStore
+  implementation that uses the Pyramid sessioning machinery and a temporary
+  file on disk).
+
 0.2a3 (2012-03-30)
 ------------------
 

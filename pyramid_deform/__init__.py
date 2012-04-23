@@ -1,3 +1,6 @@
+import os
+import binascii
+
 from pkg_resources import resource_filename
 
 import colander
@@ -7,6 +10,7 @@ import deform.exception
 import deform.widget
 from deform.form import Button
 
+from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPFound
 from pyramid.i18n import get_localizer
 from pyramid.i18n import TranslationStringFactory
@@ -334,6 +338,79 @@ def configure_zpt_renderer(search_path=()):
         paths.append(resource_filename(pkg, resource_name))
     deform.form.Form.default_renderer = deform.ZPTRendererFactory(
         tuple(paths) + default_paths, translator=translator)
+
+_marker = object()
+
+class SessionFileUploadTempStore(object):
+    def __init__(self, request):
+        try:
+            self.tempdir = request.registry.settings['pyramid_deform.tempdir']
+        except KeyError:
+            raise ConfigurationError(
+                'To use SessionFileUploadTempStore, you must set a  '
+                '"pyramid_deform.tempdir" key in your Pyramid settings. It '
+                'points to a directory which will temporarily '
+                'hold uploaded files when form validation fails.')
+        self.request = request
+        self.session = request.session
+        self.tempstore = self.session.setdefault('pyramid_deform.tempstore', {})
+        
+    def preview_url(self, uid):
+        return None
+
+    def __contains__(self, name):
+        return name in self.tempstore
+
+    def __setitem__(self, name, data):
+        stream = data.get('fp', None)
+
+        if stream is not None:
+            while True:
+                randid = binascii.hexlify(os.urandom(20))
+                fn = os.path.join(self.tempdir, randid)
+                if not os.path.exists(fn):
+                    # XXX race condition
+                    fp = open(fn, 'w+b')
+                    break
+            for chunk in chunks(stream):
+                fp.write(chunk)
+            data['fp'] = fn
+
+        self.tempstore[name] = data
+        self.session.changed()
+
+    def get(self, name, default=None):
+        data = self.tempstore.get(name)
+
+        if data is None:
+            return default
+
+        data = data.copy()
+            
+        fp = data.get('fp', None)
+
+        if isinstance(fp, basestring):
+            try:
+                fp = open(fp, 'rb')
+            except IOError: # pragma: no cover
+                fp = None
+            data['fp'] = fp
+
+        return data
+
+    def __getitem__(self, name):
+        data = self.get(name, _marker)
+        if data is _marker:
+            raise KeyError(name)
+        return data
+
+def chunks(stream, chunk_size=10000):
+    while True:
+        chunk = stream.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
+
 
 def includeme(config):
     settings = config.registry.settings

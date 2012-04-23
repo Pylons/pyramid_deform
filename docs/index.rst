@@ -127,13 +127,52 @@ XXX
 CSRF Schema
 -----------
 
-XXX
-
 ::
     >>> class LoginSchema(CSRFSchema):
     >>>     pass
     >>> schema = LoginSchema.get_schema(self.request)
 
+
+SessionFileUploadTempStore
+--------------------------
+
+A Deform "FileUploadTempStore" which uses the Pyramid sessioning machinery
+and files on disk to store file uploads in the case of a validation failure
+exists in this package at :class:`pyramid_deform.SessionFileUploadTempStore`.
+
+Usage::
+
+   from pyramid_deform import SessionFileUploadTempStore
+   from colander import Schema
+   import deform.widget
+   import deform.schema
+   import colander
+
+   @colander.deferred
+   def upload_widget(node, kw):
+       request = kw['request']
+       tmpstore = SessionFileUploadTempStore(request)
+       return deform.widget.FileUploadWidget(tmpstore)
+
+   class FileSchema(Schema):
+       file = colander.SchemaNode(
+           deform.schema.FileData(),
+           widget = upload_widget,
+           )
+
+   def aview(request):
+       schema = schema.bind(request=request)
+       ...
+
+To use the tempstore you will have to put a ``pyramid_deform.tempdir``
+setting in your Pyramid's settings (usually in the ``.ini`` file that you use
+to start your application).  This must point to an existing directory.  You
+must also configure a Pyramid session factory.
+
+Note that the directory named by ``pyramid_deform.tempdir`` will accrue lots
+of garbage.  The tempstore doesn't clean up after itself.  You'll need to set
+up a cron job or equivalent to delete files older than a day or so from that
+directory.
 
 Reporting Bugs / Development Versions
 -------------------------------------

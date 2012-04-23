@@ -1,5 +1,5 @@
-Next release
-------------
+0.2a4 (2012-04-23)
+------------------
 
 - Add ``SessionFileUploadTempStore`` (a Deform FileUploadTempStore
   implementation that uses the Pyramid sessioning machinery and a temporary

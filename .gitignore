@@ -8,3 +8,6 @@ bin/
 include/
 lib/
 local
+nosetests.xml
+pyramid_deform/coverage.xml
+.tox/

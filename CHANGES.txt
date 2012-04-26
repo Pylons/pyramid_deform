@@ -2,6 +2,8 @@ Next release
 ------------
 
 - Python 3 compatibility.
+- Add 'get_bind_data' method to FormView, to allow subclasses the ability
+  to define arbitrary data for binding with the schema.
 
 0.2a4 (2012-04-23)
 ------------------

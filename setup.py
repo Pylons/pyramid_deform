@@ -11,8 +11,6 @@
 # FITNESS FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-import sys
-
 
 __version__ = '0.2a4'
 
@@ -29,10 +27,6 @@ install_requires = [
     'deform>=0.8.1' # button disabled arg
     ]
 
-extra = {}
-if sys.version_info >= (3, 0):
-    extra["use_2to3"] = True
-
 tests_require = ['nose', 'coverage', 'Mock']
 
 docs_extras = ['Sphinx']
@@ -45,7 +39,6 @@ setup(name='pyramid_deform',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
         "Framework :: Pylons",
         ],
       keywords='web wsgi pyramid pylons deform forms form',
@@ -65,5 +58,4 @@ setup(name='pyramid_deform',
           },
       entry_points = """\
       """,
-      **extra
       )

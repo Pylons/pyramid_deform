@@ -1,5 +1,6 @@
 import os
 import binascii
+import types
 
 from pkg_resources import resource_filename
 
@@ -15,8 +16,28 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.i18n import get_localizer
 from pyramid.i18n import TranslationStringFactory
 from pyramid.threadlocal import get_current_request
+import sys
+
 
 _ = TranslationStringFactory('pyramid_deform')
+
+# True if we are running on Python 3.
+PY3 = sys.version_info[0] == 3
+
+if PY3: # pragma: no cover
+    string_types = str,
+    integer_types = int,
+    class_types = type,
+    text_type = str
+    binary_type = bytes
+    long = int
+else:
+    string_types = basestring,
+    integer_types = (int, long)
+    class_types = (type, types.ClassType)
+    text_type = unicode
+    binary_type = str
+    long = long
 
 class FormView(object):
     form_class = deform.form.Form
@@ -43,7 +64,7 @@ class FormView(object):
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
                     result = success_method(validated)
-                except deform.exception.ValidationFailure, e:
+                except deform.exception.ValidationFailure as e:
                     fail = getattr(self, '%s_failure' % button.name, None)
                     if fail is None:
                         fail = self.failure
@@ -367,6 +388,8 @@ class SessionFileUploadTempStore(object):
         if stream is not None:
             while True:
                 randid = binascii.hexlify(os.urandom(20))
+                if not isinstance(randid, string_types):
+                    randid = randid.decode("ascii")
                 fn = os.path.join(self.tempdir, randid)
                 if not os.path.exists(fn):
                     # XXX race condition
@@ -389,7 +412,7 @@ class SessionFileUploadTempStore(object):
             
         fp = data.get('fp', None)
 
-        if isinstance(fp, basestring):
+        if isinstance(fp, string_types):
             try:
                 fp = open(fp, 'rb')
             except IOError: # pragma: no cover

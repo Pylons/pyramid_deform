@@ -659,7 +659,7 @@ class TestConfigureZPTRenderer(unittest.TestCase):
         search_path = Form.default_renderer.loader.search_path
         assert len(Form.default_renderer.loader.search_path) == 2
         assert (search_path[-1],) == search_path_before
-        assert search_path[0].endswith('deform/templates')
+        assert search_path[0].endswith('deform' + os.path.sep + 'templates')
 
 class TestIncludeMe(unittest.TestCase):
     @patch('pyramid_deform.configure_zpt_renderer')

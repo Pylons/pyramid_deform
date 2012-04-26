@@ -222,7 +222,7 @@ class TestFormWizardView(unittest.TestCase):
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['states'][0], {'one':'one'})
         self.assertEqual(state['states']['schema'], {'one':'one'})
-        self.failIf('step' in state)
+        self.assertFalse('step' in state)
 
     def test_previous_success_at_step_one(self):
         from pyramid_deform import WizardState
@@ -270,7 +270,7 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
         state = request.session['pyramid_deform.wizards']['name']
-        self.failIf('step' in state)
+        self.assertFalse('step' in state)
 
     def test_previous_failure_at_step_one(self):
         from pyramid_deform import WizardState
@@ -325,8 +325,8 @@ class TestWizardState(unittest.TestCase):
         inst = self._makeOne(request)
         data = inst._get_wizard_data()
         self.assertEqual(data, {})
-        self.failUnless('name' in request.session['pyramid_deform.wizards'])
-        self.failUnless(request.session._changed)
+        self.assertTrue('name' in request.session['pyramid_deform.wizards'])
+        self.assertTrue(request.session._changed)
 
     def test__get_wizard_data_with_existing_data(self):
         request = DummyRequest()
@@ -337,7 +337,7 @@ class TestWizardState(unittest.TestCase):
         inst.request = request
         data = inst._get_wizard_data()
         self.assertEqual(data, state)
-        self.failIf(request.session._changed)
+        self.assertFalse(request.session._changed)
 
     def test_clear(self):
         request = DummyRequest()
@@ -526,11 +526,18 @@ class TestSessionFileUploadTempStore(unittest.TestCase):
         inst = self._makeOne(request)
         here = os.path.dirname(__file__)
         thisfile = os.path.join(here, 'tests.py')
-        inst['a'] = {'fp':open(thisfile, 'rb')}
+        instobj = open(thisfile, 'rb')
+        inst['a'] = {'fp':instobj}
+        fileobj = open(thisfile, 'rb')
+        inst2obj = open(inst.tempstore['a']['fp'], 'rb')
         self.assertTrue(inst.tempstore['a']['fp'].startswith(self.tempdir))
-        self.assertTrue(open(inst.tempstore['a']['fp'], 'rb').read(),
-                        open(thisfile, 'rb').read())
+        self.assertTrue(inst2obj.read(),
+            fileobj.read())
         self.assertTrue(request.session._changed)
+        inst['a']['fp'].close()
+        inst2obj.close()
+        instobj.close()
+        fileobj.close()
 
     def test_get_data_None(self):
         request = self._makeRequest()
@@ -549,8 +556,12 @@ class TestSessionFileUploadTempStore(unittest.TestCase):
         here = os.path.dirname(__file__)
         thisfile = os.path.join(here, 'tests.py')
         inst.tempstore['a'] = {'fp':thisfile}
-        self.assertEqual(inst.get('a')['fp'].read(),
-                         open(thisfile, 'rb').read())
+        instobj = inst.get('a')['fp']
+        fileobj = open(thisfile, 'rb')
+        self.assertEqual(instobj.read(),
+            fileobj.read())
+        instobj.close()
+        fileobj.close()
 
     def test___getitem___notfound(self):
         request = self._makeRequest()
@@ -659,7 +670,7 @@ class TestConfigureZPTRenderer(unittest.TestCase):
         search_path = Form.default_renderer.loader.search_path
         assert len(Form.default_renderer.loader.search_path) == 2
         assert (search_path[-1],) == search_path_before
-        assert search_path[0].endswith('deform/templates')
+        assert search_path[0].endswith('deform' + os.path.sep + 'templates')
 
 class TestIncludeMe(unittest.TestCase):
     @patch('pyramid_deform.configure_zpt_renderer')

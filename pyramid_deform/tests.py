@@ -93,6 +93,22 @@ class TestFormView(unittest.TestCase):
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'failure'})
 
+    def test_get_bind_data_contains_request(self):
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        data = inst.get_bind_data()
+        self.assertTrue('request' in data)
+
+    def test__call__binds_schema_with_get_bind_data(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.form_class = DummyForm
+        inst()
+        # note: DummySchema sets kw to the bind data
+        self.assertEquals(schema.kw, inst.get_bind_data())
+
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):
         from pyramid_deform import FormWizardView

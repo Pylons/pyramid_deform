@@ -119,6 +119,28 @@ something like this::
     </body>
   </html>
 
+
+Deferred Colander Schemas
+-------------------------
+``pyramid_deform.FormView`` will `bind
+<http://docs.pylonsproject.org/projects/colander/en/latest/binding.html>`_ the
+schema by default to the pyramid request. You may wish to bind additional data
+to the schema, which you can do by overriding the get_bind_data method in your
+subclass, like this::
+
+    class PageEditView(FormView):
+        ...
+
+        def get_bind_data(self):
+            # ensure we get any base data defined by FormView
+            data = super(PageEditView, self).get_bind_data()
+            # add any custom data here
+            data.update({
+                'bind_this_field': 'to this value',
+                'and_this_field': 'to this value'
+            })
+            return data
+
 Wizard
 ------
 

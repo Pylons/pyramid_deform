@@ -107,7 +107,7 @@ class TestFormView(unittest.TestCase):
         inst.form_class = DummyForm
         inst()
         # note: DummySchema sets kw to the bind data
-        self.assertEquals(schema.kw, inst.get_bind_data())
+        self.assertEqual(schema.kw, inst.get_bind_data())
 
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):

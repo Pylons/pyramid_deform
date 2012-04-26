@@ -489,6 +489,7 @@ class TestCRSFSchema(unittest.TestCase):
         self.assertEqual(inst2.deserialize({'csrf_token':'csrf_token'}),
                          {'csrf_token': 'csrf_token'})
 
+
 class TestSessionFileUploadTempStore(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
@@ -497,20 +498,21 @@ class TestSessionFileUploadTempStore(unittest.TestCase):
         shutil.rmtree(self.tempdir)
         
     def _getTargetClass(self):
-        from pyramid_deform import SessionFileUploadTempStore
+        from . import SessionFileUploadTempStore
         return SessionFileUploadTempStore
 
     def _makeOne(self, request):
         return self._getTargetClass()(request)
 
     def _makeRequest(self):
-        request = DummyRequest()
+        request = testing.DummyRequest()
         request.registry.settings = {}
         request.registry.settings['pyramid_deform.tempdir'] = self.tempdir
+        request.session = DummySession()
         return request
 
     def test_no_tempdir_in_settings(self):
-        request = DummyRequest()
+        request = testing.DummyRequest()
         request.registry.settings = {}
         self.assertRaises(ConfigurationError, self._makeOne, request)
 
@@ -543,38 +545,47 @@ class TestSessionFileUploadTempStore(unittest.TestCase):
         here = os.path.dirname(__file__)
         thisfile = os.path.join(here, 'tests.py')
         fp = open(thisfile, 'rb')
-        inst['a'] = {'fp': fp}
-        self.assertTrue(inst.tempstore['a']['fp'].startswith(self.tempdir))
-        with inst['a']['fp'] as f:
-            received = f.read()
+        inst['a'] = {'fp':fp}
+        self.assertTrue(inst.tempstore['a']['randid'])
+        fn = os.path.join(self.tempdir, inst.tempstore['a']['randid'])
         with open(thisfile, 'rb') as f:
             expected = f.read()
-        self.assertTrue(expected, received)
+        with open(fn, 'rb') as f:
+            received = f.read()
+        self.assertTrue(received, expected)
         self.assertTrue(request.session._changed)
         fp.close()
-
+        inst['a']['fp'].close()
+        
     def test_get_data_None(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
         self.assertEqual(inst.get('a', True), True)
 
-    def test_get_nonbasestring_fp(self):
+    def test_get_no_randid(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
         inst.tempstore['a'] = {'fp':True}
         self.assertEqual(inst.get('a'), {'fp':True})
 
-    def test_get_basestring_fp(self):
+    def test_get_with_randid(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
-        here = os.path.dirname(__file__)
-        thisfile = os.path.join(here, 'tests.py')
-        inst.tempstore['a'] = {'fp':thisfile}
-        with inst['a']['fp'] as f:
-            received = f.read()
-        with open(thisfile, 'rb') as f:
+        fn = os.path.join(self.tempdir, '1234')
+        with open(fn, 'wb') as f:
+            f.write(b'abc')
+        inst.tempstore['a'] = {'randid':'1234'}
+        with open(fn, 'rb') as f:
             expected = f.read()
-        self.assertEqual(expected, received)
+        with inst['a']['fp']  as f:
+            received = f.read()
+        self.assertEqual(received, expected)
+
+    def test_get_with_randid_file_doesntexist(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {'randid':'1234'}
+        self.assertFalse('fp' in inst.get('a'))
 
     def test___getitem___notfound(self):
         request = self._makeRequest()
@@ -586,8 +597,7 @@ class TestSessionFileUploadTempStore(unittest.TestCase):
         inst = self._makeOne(request)
         inst.tempstore['a'] = {}
         self.assertEqual(inst['a'], {})
-        
-        
+
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
         self.schema = schema

@@ -368,16 +368,16 @@ _marker = object()
 class SessionFileUploadTempStore(object):
     def __init__(self, request):
         try:
-            self.tempdir = request.registry.settings['pyramid_deform.tempdir']
+            self.tempdir=request.registry.settings['pyramid_deform.tempdir']
         except KeyError:
             raise ConfigurationError(
                 'To use SessionFileUploadTempStore, you must set a  '
-                '"pyramid_deform.tempdir" key in your Pyramid settings. It '
+                '"pyramid_deform.tempdir" key in your .ini settings. It '
                 'points to a directory which will temporarily '
                 'hold uploaded files when form validation fails.')
         self.request = request
         self.session = request.session
-        self.tempstore = self.session.setdefault('pyramid_deform.tempstore', {})
+        self.tempstore = self.session.setdefault('substanced.tempstore', {})
         
     def preview_url(self, uid):
         return None
@@ -386,7 +386,8 @@ class SessionFileUploadTempStore(object):
         return name in self.tempstore
 
     def __setitem__(self, name, data):
-        stream = data.get('fp', None)
+        newdata = data.copy()
+        stream = newdata.pop('fp', None)
 
         if stream is not None:
             while True:
@@ -397,12 +398,12 @@ class SessionFileUploadTempStore(object):
                 if not os.path.exists(fn):
                     # XXX race condition
                     fp = open(fn, 'w+b')
+                    newdata['randid'] = randid
                     break
             for chunk in chunks(stream):
                 fp.write(chunk)
-            data['fp'] = fn
 
-        self.tempstore[name] = data
+        self.tempstore[name] = newdata
         self.session.changed()
 
     def get(self, name, default=None):
@@ -411,18 +412,19 @@ class SessionFileUploadTempStore(object):
         if data is None:
             return default
 
-        data = data.copy()
+        newdata = data.copy()
             
-        fp = data.get('fp', None)
+        randid = newdata.get('randid')
 
-        if isinstance(fp, string_types):
+        if randid is not None:
+
+            fn = os.path.join(self.tempdir, randid)
             try:
-                fp = open(fp, 'rb')
-            except IOError: # pragma: no cover
-                fp = None
-            data['fp'] = fp
+                newdata['fp'] = open(fn, 'rb')
+            except IOError:
+                pass
 
-        return data
+        return newdata
 
     def __getitem__(self, name):
         data = self.get(name, _marker)

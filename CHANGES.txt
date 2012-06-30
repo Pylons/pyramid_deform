@@ -1,5 +1,5 @@
-Next release
-------------
+0.2a5 (2012-06-30)
+------------------
 
 - Python 3 compatibility.
 

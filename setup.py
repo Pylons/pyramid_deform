@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.2a4dev'
+__version__ = '0.2a4'
 
 import os
 
@@ -27,9 +27,9 @@ install_requires = [
     'deform>=0.8.1' # button disabled arg
     ]
 
-tests_require = [
-    'mock',
-    ]
+tests_require = ['nose', 'coverage', 'Mock']
+
+docs_extras = ['Sphinx']
 
 setup(name='pyramid_deform',
       version=__version__,
@@ -39,7 +39,12 @@ setup(name='pyramid_deform',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Framework :: Pylons",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Framework :: Pyramid",
         ],
       keywords='web wsgi pyramid pylons deform forms form',
       author="Chris McDonough, Agendaless Consulting",
@@ -52,9 +57,10 @@ setup(name='pyramid_deform',
       tests_require = tests_require,
       install_requires = install_requires,
       test_suite="pyramid_deform",
+      extras_require = {
+          'testing':tests_require,
+          'docs':docs_extras,
+          },
       entry_points = """\
       """,
-      extras_require = {
-          'testing': tests_require,
-          },
       )

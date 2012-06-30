@@ -1,3 +1,7 @@
+import os
+import binascii
+import types
+
 from pkg_resources import resource_filename
 
 import colander
@@ -7,12 +11,33 @@ import deform.exception
 import deform.widget
 from deform.form import Button
 
+from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPFound
 from pyramid.i18n import get_localizer
 from pyramid.i18n import TranslationStringFactory
 from pyramid.threadlocal import get_current_request
+import sys
+
 
 _ = TranslationStringFactory('pyramid_deform')
+
+# True if we are running on Python 3.
+PY3 = sys.version_info[0] == 3
+
+if PY3: # pragma: no cover
+    string_types = str,
+    integer_types = int,
+    class_types = type,
+    text_type = str
+    binary_type = bytes
+    long = int
+else:
+    string_types = basestring,
+    integer_types = (int, long)
+    class_types = (type, types.ClassType)
+    text_type = unicode
+    binary_type = str
+    long = long
 
 class FormView(object):
     form_class = deform.form.Form
@@ -22,10 +47,13 @@ class FormView(object):
     def __init__(self, request):
         self.request = request
 
+    def get_bind_data(self):
+        return {'request': self.request}
+
     def __call__(self):
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
-        self.schema = self.schema.bind(request=self.request)
+        self.schema = self.schema.bind(**self.get_bind_data())
         form = self.form_class(self.schema, buttons=self.buttons,
                                use_ajax=use_ajax, ajax_options=ajax_options)
         self.before(form)
@@ -39,7 +67,7 @@ class FormView(object):
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
                     result = success_method(validated)
-                except deform.exception.ValidationFailure, e:
+                except deform.exception.ValidationFailure as e:
                     fail = getattr(self, '%s_failure' % button.name, None)
                     if fail is None:
                         fail = self.failure
@@ -58,14 +86,22 @@ class FormView(object):
     def before(self, form):
         pass
 
+    def appstruct(self):
+        return None
+
     def failure(self, e):
         return {
-            'form':e.render(),
+            'form': e.render(),
             }
 
     def show(self, form):
+        appstruct = self.appstruct()
+        if appstruct is None:
+            rendered = form.render()
+        else:
+            rendered = form.render(appstruct)
         return {
-            'form':form.render(),
+            'form': rendered,
             }
 
 class WizardState(object):
@@ -334,6 +370,83 @@ def configure_zpt_renderer(search_path=()):
         paths.append(resource_filename(pkg, resource_name))
     deform.form.Form.default_renderer = deform.ZPTRendererFactory(
         tuple(paths) + default_paths, translator=translator)
+
+_marker = object()
+
+class SessionFileUploadTempStore(object):
+    def __init__(self, request):
+        try:
+            self.tempdir=request.registry.settings['pyramid_deform.tempdir']
+        except KeyError:
+            raise ConfigurationError(
+                'To use SessionFileUploadTempStore, you must set a  '
+                '"pyramid_deform.tempdir" key in your .ini settings. It '
+                'points to a directory which will temporarily '
+                'hold uploaded files when form validation fails.')
+        self.request = request
+        self.session = request.session
+        self.tempstore = self.session.setdefault('substanced.tempstore', {})
+        
+    def preview_url(self, uid):
+        return None
+
+    def __contains__(self, name):
+        return name in self.tempstore
+
+    def __setitem__(self, name, data):
+        newdata = data.copy()
+        stream = newdata.pop('fp', None)
+
+        if stream is not None:
+            while True:
+                randid = binascii.hexlify(os.urandom(20))
+                if not isinstance(randid, string_types):
+                    randid = randid.decode("ascii")
+                fn = os.path.join(self.tempdir, randid)
+                if not os.path.exists(fn):
+                    # XXX race condition
+                    fp = open(fn, 'w+b')
+                    newdata['randid'] = randid
+                    break
+            for chunk in chunks(stream):
+                fp.write(chunk)
+
+        self.tempstore[name] = newdata
+        self.session.changed()
+
+    def get(self, name, default=None):
+        data = self.tempstore.get(name)
+
+        if data is None:
+            return default
+
+        newdata = data.copy()
+            
+        randid = newdata.get('randid')
+
+        if randid is not None:
+
+            fn = os.path.join(self.tempdir, randid)
+            try:
+                newdata['fp'] = open(fn, 'rb')
+            except IOError:
+                pass
+
+        return newdata
+
+    def __getitem__(self, name):
+        data = self.get(name, _marker)
+        if data is _marker:
+            raise KeyError(name)
+        return data
+
+def chunks(stream, chunk_size=10000):
+    while True:
+        chunk = stream.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
+
 
 def includeme(config):
     settings = config.registry.settings

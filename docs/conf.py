@@ -19,16 +19,42 @@ import sys, os
 # make it absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
 
-parent = os.path.dirname(os.path.dirname(__file__))
-sys.path.append(os.path.abspath(parent))
-wd = os.getcwd()
-os.chdir(parent)
-os.system('%s setup.py test -q' % sys.executable)
-os.chdir(wd)
+# Add and use Pylons theme
+if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
+    from subprocess import call, Popen, PIPE
 
-for item in os.listdir(parent):
-    if item.endswith('.egg'):
-        sys.path.append(os.path.join(parent, item))
+    p = Popen('which git', shell=True, stdout=PIPE)
+    git = p.stdout.read().strip()
+    cwd = os.getcwd()
+    _themes = os.path.join(cwd, '_themes')
+
+    if not os.path.isdir(_themes):
+        call([git, 'clone', 'git://github.com/Pylons/pylons_sphinx_theme.git',
+                '_themes'])
+    else:
+        os.chdir(_themes)
+        call([git, 'checkout', 'master'])
+        call([git, 'pull'])
+        os.chdir(cwd)
+
+    sys.path.append(os.path.abspath('_themes'))
+
+    parent = os.path.dirname(os.path.dirname(__file__))
+    sys.path.append(os.path.abspath(parent))
+    wd = os.getcwd()
+    os.chdir(parent)
+    os.system('%s setup.py test -q' % sys.executable)
+    os.chdir(wd)
+
+    for item in os.listdir(parent):
+        if item.endswith('.egg'):
+            sys.path.append(os.path.join(parent, item))
+
+html_theme_path = ['_themes']
+html_theme = 'pyramid'
+html_theme_options = dict(
+    github_url='https://github.com/Pylons/pyramid_deform',
+    )
 
 # General configuration
 # ---------------------
@@ -48,13 +74,13 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyramid_deform'
-copyright = '2010, Agendaless Consulting'
+copyright = '2012, Agendaless Consulting'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.1.6'
+version = '0.2a4'
 # The full version, including alpha/beta/rc tags.
 release = version
 

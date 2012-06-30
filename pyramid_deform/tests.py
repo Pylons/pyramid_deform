@@ -6,11 +6,14 @@
 # decrement_step
 # increment_step
 
+import os
 import unittest
-
+import shutil
+import tempfile
 from mock import patch
 from mock import Mock
 from pyramid import testing
+from pyramid.exceptions import ConfigurationError
 
 class TestFormView(unittest.TestCase):
     def _getTargetClass(self):
@@ -29,8 +32,19 @@ class TestFormView(unittest.TestCase):
         inst.schema = schema
         inst.form_class = DummyForm
         result = inst()
-        self.assertEqual(result,
-                         {'css_links': (), 'js_links': (), 'form': 'rendered'})
+        self.assertEqual(result, {'css_links': (), 'js_links': (),
+                                  'form': 'rendered with None'})
+
+    def test___call__show_with_appstruct(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.form_class = DummyForm
+        inst.appstruct = lambda: {'my': 'appstruct'}
+        result = inst()
+        self.assertEqual(result, {'css_links': (), 'js_links': (),
+                                  'form': "rendered with {'my': 'appstruct'}"})
 
     def test___call__show_result_response(self):
         from webob import Response
@@ -90,6 +104,22 @@ class TestFormView(unittest.TestCase):
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'failure'})
 
+    def test_get_bind_data_contains_request(self):
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        data = inst.get_bind_data()
+        self.assertTrue('request' in data)
+
+    def test__call__binds_schema_with_get_bind_data(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.form_class = DummyForm
+        inst()
+        # note: DummySchema sets kw to the bind data
+        self.assertEqual(schema.kw, inst.get_bind_data())
+
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):
         from pyramid_deform import FormWizardView
@@ -140,7 +170,7 @@ class TestFormWizardView(unittest.TestCase):
         inst.request = request
         inst.wizard_state = WizardState(request, 'name')
         result = inst.show(form)
-        self.assertEqual(result, {'form': 'rendered'})
+        self.assertEqual(result, {'form': 'rendered with {}'})
         self.assertEqual(form.appstruct, {})
 
     def test_show_with_appstruct(self):
@@ -155,7 +185,7 @@ class TestFormWizardView(unittest.TestCase):
         inst.request = request
         inst.wizard_state = WizardState(request, 'name')
         result = inst.show(form)
-        self.assertEqual(result, {'form': 'rendered'})
+        self.assertEqual(result, {'form': "rendered with {'1': '2'}"})
         self.assertEqual(form.appstruct, {'1':'2'})
 
     def test_show_with_deserialize(self):
@@ -169,7 +199,7 @@ class TestFormWizardView(unittest.TestCase):
         inst.schema.wizard_serializer = lambda *arg: DummySerializer('state2')
         inst.wizard_state = WizardState(request, 'name')
         result = inst.show(form)
-        self.assertEqual(result, {'form': 'rendered'})
+        self.assertEqual(result, {'form': 'rendered with state2'})
         self.assertEqual(form.appstruct, 'state2')
 
     def test_next_success(self):
@@ -219,7 +249,7 @@ class TestFormWizardView(unittest.TestCase):
         state = request.session['pyramid_deform.wizards']['name']
         self.assertEqual(state['states'][0], {'one':'one'})
         self.assertEqual(state['states']['schema'], {'one':'one'})
-        self.failIf('step' in state)
+        self.assertFalse('step' in state)
 
     def test_previous_success_at_step_one(self):
         from pyramid_deform import WizardState
@@ -267,7 +297,7 @@ class TestFormWizardView(unittest.TestCase):
         self.assertEqual(result.status, '302 Found')
         self.assertEqual(result.location, 'http://example.com')
         state = request.session['pyramid_deform.wizards']['name']
-        self.failIf('step' in state)
+        self.assertFalse('step' in state)
 
     def test_previous_failure_at_step_one(self):
         from pyramid_deform import WizardState
@@ -322,8 +352,8 @@ class TestWizardState(unittest.TestCase):
         inst = self._makeOne(request)
         data = inst._get_wizard_data()
         self.assertEqual(data, {})
-        self.failUnless('name' in request.session['pyramid_deform.wizards'])
-        self.failUnless(request.session._changed)
+        self.assertTrue('name' in request.session['pyramid_deform.wizards'])
+        self.assertTrue(request.session._changed)
 
     def test__get_wizard_data_with_existing_data(self):
         request = DummyRequest()
@@ -334,7 +364,7 @@ class TestWizardState(unittest.TestCase):
         inst.request = request
         data = inst._get_wizard_data()
         self.assertEqual(data, state)
-        self.failIf(request.session._changed)
+        self.assertFalse(request.session._changed)
 
     def test_clear(self):
         request = DummyRequest()
@@ -469,7 +499,116 @@ class TestCRSFSchema(unittest.TestCase):
         inst2 = inst.bind(request=request)
         self.assertEqual(inst2.deserialize({'csrf_token':'csrf_token'}),
                          {'csrf_token': 'csrf_token'})
+
+
+class TestSessionFileUploadTempStore(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
         
+    def _getTargetClass(self):
+        from . import SessionFileUploadTempStore
+        return SessionFileUploadTempStore
+
+    def _makeOne(self, request):
+        return self._getTargetClass()(request)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.registry.settings = {}
+        request.registry.settings['pyramid_deform.tempdir'] = self.tempdir
+        request.session = DummySession()
+        return request
+
+    def test_no_tempdir_in_settings(self):
+        request = testing.DummyRequest()
+        request.registry.settings = {}
+        self.assertRaises(ConfigurationError, self._makeOne, request)
+
+    def test_preview_url(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertEqual(inst.preview_url(None), None)
+
+    def test_contains_true(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = 1
+        self.assertTrue('a' in inst)
+        
+    def test_contains_false(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertFalse('a' in inst)
+
+    def test_setitem_stream_None(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst['a'] = {}
+        self.assertEqual(inst.tempstore['a'], {})
+        self.assertTrue(request.session._changed)
+
+    def test_setitem_stream_file(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        here = os.path.dirname(__file__)
+        thisfile = os.path.join(here, 'tests.py')
+        fp = open(thisfile, 'rb')
+        inst['a'] = {'fp':fp}
+        self.assertTrue(inst.tempstore['a']['randid'])
+        fn = os.path.join(self.tempdir, inst.tempstore['a']['randid'])
+        with open(thisfile, 'rb') as f:
+            expected = f.read()
+        with open(fn, 'rb') as f:
+            received = f.read()
+        self.assertTrue(received, expected)
+        self.assertTrue(request.session._changed)
+        fp.close()
+        inst['a']['fp'].close()
+        
+    def test_get_data_None(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertEqual(inst.get('a', True), True)
+
+    def test_get_no_randid(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {'fp':True}
+        self.assertEqual(inst.get('a'), {'fp':True})
+
+    def test_get_with_randid(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        fn = os.path.join(self.tempdir, '1234')
+        with open(fn, 'wb') as f:
+            f.write(b'abc')
+        inst.tempstore['a'] = {'randid':'1234'}
+        with open(fn, 'rb') as f:
+            expected = f.read()
+        with inst['a']['fp']  as f:
+            received = f.read()
+        self.assertEqual(received, expected)
+
+    def test_get_with_randid_file_doesntexist(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {'randid':'1234'}
+        self.assertFalse('fp' in inst.get('a'))
+
+    def test___getitem___notfound(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertRaises(KeyError, inst.__getitem__, 'a')
+        
+    def test___getitem___found(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {}
+        self.assertEqual(inst['a'], {})
+
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
         self.schema = schema
@@ -482,7 +621,7 @@ class DummyForm(object):
 
     def render(self, appstruct=None):
         self.appstruct = appstruct
-        return 'rendered'
+        return 'rendered with {0}'.format(appstruct)
 
     def validate(self, controls):
         return 'validated'
@@ -565,7 +704,7 @@ class TestConfigureZPTRenderer(unittest.TestCase):
         search_path = Form.default_renderer.loader.search_path
         assert len(Form.default_renderer.loader.search_path) == 2
         assert (search_path[-1],) == search_path_before
-        assert search_path[0].endswith('deform/templates')
+        assert search_path[0].endswith('deform' + os.path.sep + 'templates')
 
 class TestIncludeMe(unittest.TestCase):
     @patch('pyramid_deform.configure_zpt_renderer')

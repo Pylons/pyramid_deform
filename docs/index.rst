@@ -118,7 +118,7 @@ something like this::
     <!-- CSS -->
     <tal:block repeat="reqt css_links|[]">
       <link rel="stylesheet" 
-            href="${request.static_url('deform:static/%s' % reqt')}" 
+            href="${request.static_url('deform:static/%s' % reqt)}" 
             type="text/css" />
     </tal:block>
     <!-- JavaScript -->
@@ -165,6 +165,7 @@ CSRF Schema
 -----------
 
 ::
+
     >>> class LoginSchema(CSRFSchema):
     >>>     pass
     >>> schema = LoginSchema.get_schema(self.request)

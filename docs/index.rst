@@ -4,6 +4,16 @@ pyramid_deform
 ``pyramid_deform`` provides bindings for the Pyramid web framework to the
 `Deform <http://docs.repoze.org/deform>`_ form library.
 
+Topics
+------
+
+.. toctree::
+   :maxdepth: 2
+
+   index.rst
+   api.rst
+   changes.rst
+
 Installation
 ------------
 

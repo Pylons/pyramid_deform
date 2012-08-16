@@ -40,8 +40,19 @@ else:
     long = long
 
 class FormView(object):
+    """
+    Helper view for Deform forms for use with the Pyramid framework.
+    """
+    #: Class object of the type of form to be created.
+    #: Defaults to using the standard :class:`deform.form.Form` class.
     form_class = deform.form.Form
+
+    #: Tuple of buttons or strings to pass to the form instance.
+    #: Override in your derived class.
     buttons = ()
+
+    #: `Colander` schema instance to be used to create the form instance.
+    #: Provide your schema in your derived class.
     schema = None
 
     def __init__(self, request):
@@ -51,6 +62,8 @@ class FormView(object):
         return {'request': self.request}
 
     def __call__(self):
+        """ Prepares and render the form according to provided options.
+        """
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
         self.schema = self.schema.bind(**self.get_bind_data())
@@ -84,9 +97,23 @@ class FormView(object):
         return result
 
     def before(self, form):
+        """ Performs some processing on the ``form`` prior to rendering.
+        
+        By default, this method does nothing. Override this method
+        in your dervived class to modify the ``form``. Your function
+        will be executed immediately after instansiating the form
+        instance in :meth:`__call__` (thus before obtaining widget resources,
+        considering buttons, or rendering)."""
         pass
 
     def appstruct(self):
+        """ Returns an ``appstruct`` for form default values when rendered.
+
+        By default, this method does nothing. Override this method in
+        your dervived class and return a suitable entity that can be
+        used as an ``appstruct`` and passed to the
+        :meth:`deform.Field.render` of an instance of
+        :attr:`form_class`."""
         return None
 
     def failure(self, e):
@@ -449,6 +476,14 @@ def chunks(stream, chunk_size=10000):
 
 
 def includeme(config):
+    """ Provide useful configuration to a Pyramid ``Configurator`` instance.
+
+    Currently, this hook will set up and register translation paths so
+    for Deform and Colander, add a static view for Deform resources, and
+    configures a template search path (if one is specified by
+    ``pyramid_deform.template_search_path`` in your Pyramid
+    configuration).
+    """
     settings = config.registry.settings
     search_path = settings.get(
         'pyramid_deform.template_search_path', '').strip()

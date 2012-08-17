@@ -55,6 +55,11 @@ class FormView(object):
     #: Provide your schema in your derived class.
     schema = None
 
+    #: Structure of options to pass as keyword arguments when instantiating
+    #: the form instance of :attr:`form_class`. Any options that can be
+    #: passed to this class' ``__init__`` can be provided here.
+    form_options = {}
+
     def __init__(self, request):
         self.request = request
 
@@ -89,7 +94,8 @@ class FormView(object):
         ajax_options = getattr(self, 'ajax_options', '{}')
         self.schema = self.schema.bind(**self.get_bind_data())
         form = self.form_class(self.schema, buttons=self.buttons,
-                               use_ajax=use_ajax, ajax_options=ajax_options)
+                               use_ajax=use_ajax, ajax_options=ajax_options,
+                               **self.form_options)
         self.before(form)
         reqts = form.get_widget_resources()
         result = None

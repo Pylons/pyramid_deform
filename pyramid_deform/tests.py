@@ -10,6 +10,7 @@ import os
 import unittest
 import shutil
 import tempfile
+import types
 from mock import patch
 from mock import Mock
 from pyramid import testing
@@ -119,6 +120,27 @@ class TestFormView(unittest.TestCase):
         inst()
         # note: DummySchema sets kw to the bind data
         self.assertEqual(schema.kw, inst.get_bind_data())
+
+    def test_form_options_applied(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.form_class = DummyForm
+        form_options = {'formid': 'custom-id',
+                        'action': 'custom-action',
+                        'method': 'GET',
+                        'arbitrary-option': ''}
+        inst.form_options = form_options
+
+        def check_form(self, form):
+            self.form = form
+        inst.before = types.MethodType(check_form, inst)
+        inst()
+        form = inst.form
+        # All options should end up on the form, overriding any defaults
+        for key, value in form_options.iteritems():
+            self.assertEqual(getattr(form, key), value)
 
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):
@@ -610,11 +632,16 @@ class TestSessionFileUploadTempStore(unittest.TestCase):
         self.assertEqual(inst['a'], {})
 
 class DummyForm(object):
-    def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
+    def __init__(self, schema, buttons=None, use_ajax=False, ajax_options='',
+                 formid='deform', action='', method='POST', **kw):
         self.schema = schema
         self.buttons = buttons
         self.use_ajax = use_ajax
         self.ajax_options = ajax_options
+        self.formid = formid
+        self.action = action
+        self.method = method
+        self.__dict__.update(kw)
 
     def get_widget_resources(self):
         return {'js':(), 'css':()}

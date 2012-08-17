@@ -82,6 +82,7 @@ You can then write a ``PageEditView`` using
   class PageEditView(FormView):
       schema = PageSchema()
       buttons = ('save',)
+      form_options = {'formid': 'pyramid-deform'}
 
       def save_success(self, appstruct):
           context = self.request.context
@@ -103,6 +104,13 @@ it's a required field.
 
 We use the ``appstruct`` method to pre-fill the form with values from
 the page object that we edit (i.e. ``context``).
+
+We also provide a ``form_options`` dict -- this structure can contain
+any options to be passed as keyword arguments to the form class' ``__init__``
+method.  In the case above, we customise the ID for the form using the
+``formid`` option but could change the ``action``, ``method``,
+and more.  For more details, see 
+http://deform.readthedocs.org/en/latest/api.html#deform.Form.
 
 The ``PageEditView`` is registered like any other Pyramid view.  Maybe
 like this:

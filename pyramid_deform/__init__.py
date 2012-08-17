@@ -59,10 +59,31 @@ class FormView(object):
         self.request = request
 
     def get_bind_data(self):
+        """
+        Return a ``dict``-like structure to bind to :attr:`schema`.
+
+        By default, this method returns a ``dict`` with :attr:`request` -
+        the object passed to :meth:`__init__`. The returned structure
+        will be passed as keyword arguments to :meth:`schema.bind`.
+        """
         return {'request': self.request}
 
     def __call__(self):
-        """ Prepares and render the form according to provided options.
+        """ 
+        Prepares and render the form according to provided options.
+
+        Upon receiving a ``POST`` request, this method will validate
+        the request against the form instance. After validation, 
+        this calls a method based upon the name of the button used for
+        form submission and whether the validation succeeded or failed.
+        If the button was named ``save``, then :meth:`save_success` will be
+        called on successful validation or :meth:`save_failure` will
+        be called upon failure. An exception to this is when no such
+        ``save_failure`` method is present; in this case, the fallback
+        is :meth:`failure``. 
+        
+        Returns a ``dict`` structure suitable for provision tog the given
+        view. By default, this is the page template specified 
         """
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
@@ -97,31 +118,49 @@ class FormView(object):
         return result
 
     def before(self, form):
-        """ Performs some processing on the ``form`` prior to rendering.
+        """
+        Performs some processing on the ``form`` prior to rendering.
         
         By default, this method does nothing. Override this method
         in your dervived class to modify the ``form``. Your function
         will be executed immediately after instansiating the form
         instance in :meth:`__call__` (thus before obtaining widget resources,
-        considering buttons, or rendering)."""
+        considering buttons, or rendering).
+        """
         pass
 
     def appstruct(self):
-        """ Returns an ``appstruct`` for form default values when rendered.
+        """
+        Returns an ``appstruct`` for form default values when rendered.
 
         By default, this method does nothing. Override this method in
         your dervived class and return a suitable entity that can be
         used as an ``appstruct`` and passed to the
         :meth:`deform.Field.render` of an instance of
-        :attr:`form_class`."""
+        :attr:`form_class`.
+        """
         return None
 
     def failure(self, e):
+        """
+        Default action upon form validation failure.
+
+        Returns the result of :meth:`render` of the given ``e`` object
+        (an instance of :class:`deform.exception.ValidationFailure`) as the
+        ``form`` key in a ``dict`` structure. 
+        """
         return {
             'form': e.render(),
             }
 
     def show(self, form):
+        """
+        Render the given form, with or without an ``appstruct`` context.
+
+        The given ``form`` argument will be rendered with an ``appstruct``
+        if :meth:`appstruct` provides one.  Otherwise, it is rendered without.
+        Returns the rendered form as the ``form`` key in a ``dict`` structure.
+        """
         appstruct = self.appstruct()
         if appstruct is None:
             rendered = form.render()

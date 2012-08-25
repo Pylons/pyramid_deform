@@ -98,7 +98,7 @@ class FormView(object):
 
     def before(self, form):
         """ Performs some processing on the ``form`` prior to rendering.
-        
+
         By default, this method does nothing. Override this method
         in your dervived class to modify the ``form``. Your function
         will be executed immediately after instansiating the form
@@ -210,7 +210,7 @@ class FormWizardView(object):
         self.request = request
         self.wizard_state = self.wizard_state_class(request, self.wizard.name)
         step = self.wizard_state.get_step_num()
-        
+
         if step > len(self.wizard.schemas)-1:
             states = self.wizard_state.get_step_states()
             result = self.wizard.done(request, states)
@@ -265,7 +265,7 @@ class FormWizardView(object):
         serializer = self.get_schema_serializer()
         if serializer is not None:
             state = serializer.deserialize(state)
-        return state 
+        return state
 
     def serialize(self, state):
         serializer = self.get_schema_serializer()
@@ -299,7 +299,7 @@ class FormWizardView(object):
 class FormWizard(object):
     form_wizard_view_class = FormWizardView # for testing
     wizard_state_class = WizardState
-    
+
     def __init__(self, name, done, *schemas):
         self.name = name
         self.done = done
@@ -341,12 +341,14 @@ class FormWizard(object):
 
 @colander.deferred
 def deferred_csrf_value(node, kw):
-    return kw['request'].session.get_csrf_token()
+    # We convert to unicode here, otherwise in python 3 the value appears on
+    # the page like this: value="b'92f536acf689ac05456646d12aef628ebf437dbd'"
+    return kw['request'].session.get_csrf_token().decode('ascii')
 
 @colander.deferred
 def deferred_csrf_validator(node, kw):
     def csrf_validate(node, value):
-        if value != kw['request'].session.get_csrf_token():
+        if value != kw['request'].session.get_csrf_token().decode('ascii'):
             raise colander.Invalid(node,
                                    _('Invalid cross-site scripting token'))
     return csrf_validate
@@ -403,7 +405,7 @@ _marker = object()
 class SessionFileUploadTempStore(object):
     def __init__(self, request):
         try:
-            self.tempdir=request.registry.settings['pyramid_deform.tempdir']
+            self.tempdir = request.registry.settings['pyramid_deform.tempdir']
         except KeyError:
             raise ConfigurationError(
                 'To use SessionFileUploadTempStore, you must set a  '
@@ -413,7 +415,7 @@ class SessionFileUploadTempStore(object):
         self.request = request
         self.session = request.session
         self.tempstore = self.session.setdefault('substanced.tempstore', {})
-        
+
     def preview_url(self, uid):
         return None
 
@@ -448,7 +450,7 @@ class SessionFileUploadTempStore(object):
             return default
 
         newdata = data.copy()
-            
+
         randid = newdata.get('randid')
 
         if randid is not None:

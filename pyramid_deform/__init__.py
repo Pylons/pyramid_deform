@@ -478,9 +478,11 @@ def chunks(stream, chunk_size=10000):
 def includeme(config):
     """ Provide useful configuration to a Pyramid ``Configurator`` instance.
 
-    Currently, this hook will set up and register translation paths so
-    for Deform and Colander, add a static view for Deform resources, and
-    configures a template search path (if one is specified by
+    Currently, this hook will set up and register translation paths
+    for Deform and Colander, add a static view for Deform resources (uses
+    ``pyramid_deform.static_path`` from the Pyramid configuration if
+    specified else ``static-deform`` by default), and configures a
+    template search path (if one is specified by
     ``pyramid_deform.template_search_path`` in your Pyramid
     configuration).
     """
@@ -489,6 +491,8 @@ def includeme(config):
         'pyramid_deform.template_search_path', '').strip()
 
     config.add_translation_dirs('colander:locale', 'deform:locale')
-    config.add_static_view('static-deform', 'deform:static')
+    static_path = settings.get(
+        'pyramid_deform.static_path', 'static-deform').strip()
+    config.add_static_view(static_path, 'deform:static')
 
     configure_zpt_renderer(search_path.split())

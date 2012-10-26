@@ -1,3 +1,12 @@
+Next release
+------------
+
+- ``form_options`` attribute of FormView class allows configuration of
+  deform.Form object constructor values.
+
+- Adding a ``pyramid_deform.static_path`` Pyramid config file variable allows
+  you to change the pyramid_deform static URL path segment.
+
 0.2a5 (2012-06-30)
 ------------------
 

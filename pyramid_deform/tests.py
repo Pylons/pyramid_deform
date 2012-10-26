@@ -718,6 +718,23 @@ class TestIncludeMe(unittest.TestCase):
 
         assert config.add_translation_dirs.call_count == 1
         assert config.add_static_view.call_count == 1
+        config.add_static_view.assert_called_with('static-deform', 'deform:static')
+        configure_zpt_renderer.assert_called_with([])
+
+    @patch('pyramid_deform.configure_zpt_renderer')
+    @patch('deform.form.Form')
+    def test_static_path(self, Form, configure_zpt_renderer):
+        from pyramid_deform import includeme
+
+        config = Mock()
+        config.registry.settings = {
+            'pyramid_deform.static_path': 'http://some.domain.com/override/path ', #also tests strip
+            }
+        includeme(config)
+
+        assert config.add_translation_dirs.call_count == 1
+        assert config.add_static_view.call_count == 1
+        config.add_static_view.assert_called_with('http://some.domain.com/override/path', 'deform:static')
         configure_zpt_renderer.assert_called_with([])
 
     @patch('pyramid_deform.configure_zpt_renderer')

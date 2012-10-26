@@ -139,7 +139,7 @@ class TestFormView(unittest.TestCase):
         inst()
         form = inst.form
         # All options should end up on the form, overriding any defaults
-        for key, value in dict(form_options).iteritems():
+        for key, value in dict(form_options).items():
             self.assertEqual(getattr(form, key), value)
 
 class TestFormWizardView(unittest.TestCase):

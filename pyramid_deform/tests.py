@@ -127,10 +127,10 @@ class TestFormView(unittest.TestCase):
         inst = self._makeOne(request)
         inst.schema = schema
         inst.form_class = DummyForm
-        form_options = {'formid': 'custom-id',
-                        'action': 'custom-action',
-                        'method': 'GET',
-                        'arbitrary-option': ''}
+        form_options = (('formid', 'custom-id'),
+                        ('action', 'custom-action'),
+                        ('method', 'GET'),
+                        ('arbitrary-option', ''))
         inst.form_options = form_options
 
         def check_form(self, form):
@@ -139,7 +139,7 @@ class TestFormView(unittest.TestCase):
         inst()
         form = inst.form
         # All options should end up on the form, overriding any defaults
-        for key, value in form_options.iteritems():
+        for key, value in dict(form_options).iteritems():
             self.assertEqual(getattr(form, key), value)
 
 class TestFormWizardView(unittest.TestCase):

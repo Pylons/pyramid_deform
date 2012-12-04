@@ -60,6 +60,11 @@ class FormView(object):
     #: passed to this class' ``__init__`` can be provided here.
     form_options = ()
 
+    #: Two-tuple of options to pass as keyword arguments when rendering
+    #: the form instance of :attr:`form_class`. Any options that can be
+    #: passed to this form's ``render`` can be provided here.
+    render_options = ()
+
     def __init__(self, request):
         self.request = request
 
@@ -167,11 +172,13 @@ class FormView(object):
         if :meth:`appstruct` provides one.  Otherwise, it is rendered without.
         Returns the rendered form as the ``form`` key in a ``dict`` structure.
         """
+
+        render_options = dict(self.render_options)
         appstruct = self.appstruct()
         if appstruct is None:
-            rendered = form.render()
+            rendered = form.render(**render_options)
         else:
-            rendered = form.render(appstruct)
+            rendered = form.render(appstruct, **render_options)
         return {
             'form': rendered,
             }

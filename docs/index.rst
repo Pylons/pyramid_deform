@@ -113,6 +113,9 @@ method.  In the case above, we customise the ID for the form using the
 and more.  For more details, see 
 http://deform.readthedocs.org/en/latest/api.html#deform.Form.
 
+And ``render_options`` is provided too. 
+This options to be passed as keyword arguments to the form class' ``render`` method.
+
 The ``PageEditView`` is registered like any other Pyramid view.  Maybe
 like this:
 

@@ -142,6 +142,27 @@ class TestFormView(unittest.TestCase):
         for key, value in dict(form_options).items():
             self.assertEqual(getattr(form, key), value)
 
+    def test_render_options_applied_without_appstruct(self):
+        request = DummyRequest()
+        schema = DummySchema()
+        inst = self._makeOne(request)
+        inst.render_options = (("readonly", True),)
+        form = DummyForm(schema)
+
+        result = inst.show(form)
+        self.assertEqual(result['form'], "rendered with None with options {'readonly': True}")
+
+    def test_render_options_applied_with_appstruct(self):
+        request = DummyRequest()
+        schema = DummySchema()
+        inst = self._makeOne(request)
+        inst.render_options = (("readonly", True),)
+        inst.appstruct = lambda: {'my': 'appstruct'}
+        form = DummyForm(schema)
+
+        result = inst.show(form)
+        self.assertEqual(result['form'], "rendered with {'my': 'appstruct'} with options {'readonly': True}")
+
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):
         from pyramid_deform import FormWizardView
@@ -646,9 +667,9 @@ class DummyForm(object):
     def get_widget_resources(self):
         return {'js':(), 'css':()}
 
-    def render(self, appstruct=None):
+    def render(self, appstruct=None, **kw):
         self.appstruct = appstruct
-        return 'rendered with {0}'.format(appstruct)
+        return 'rendered with {0}'.format(appstruct) + (" with options {0}".format(kw) if kw else "")
 
     def validate(self, controls):
         return 'validated'

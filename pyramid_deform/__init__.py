@@ -406,7 +406,7 @@ class CSRFSchema(colander.Schema):
       from pyramid_deform import CSRFSchema
       import colander
 
-      class MySchema(CRSFSchema):
+      class MySchema(CSRFSchema):
           my_value = colander.SchemaNode(colander.String())
 
       And in your application code, *bind* the schema, passing the request

@@ -80,7 +80,7 @@ copyright = '2012, Agendaless Consulting'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.2a5'
+version = '0.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 

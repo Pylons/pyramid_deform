@@ -2,7 +2,8 @@ pyramid_deform
 ==============
 
 ``pyramid_deform`` provides bindings for the Pyramid web framework to the
-`Deform <http://docs.repoze.org/deform>`_ form library.
+`Deform <http://pylons.readthedocs.org/projects/deform/en/latest/>`_ form
+library.
 
 Topics
 ------
@@ -10,7 +11,6 @@ Topics
 .. toctree::
    :maxdepth: 2
 
-   index.rst
    api.rst
    changes.rst
 

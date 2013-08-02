@@ -1,5 +1,5 @@
-Next release
-------------
+0.2 (2013-08-01)
+----------------
 
 - ``form_options`` attribute of FormView class allows configuration of
   deform.Form object constructor values.

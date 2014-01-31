@@ -128,7 +128,7 @@ class FormView(object):
         Performs some processing on the ``form`` prior to rendering.
         
         By default, this method does nothing. Override this method
-        in your dervived class to modify the ``form``. Your function
+        in your derived class to modify the ``form``. Your function
         will be executed immediately after instansiating the form
         instance in :meth:`__call__` (thus before obtaining widget resources,
         considering buttons, or rendering).
@@ -140,7 +140,7 @@ class FormView(object):
         Returns an ``appstruct`` for form default values when rendered.
 
         By default, this method does nothing. Override this method in
-        your dervived class and return a suitable entity that can be
+        your derived class and return a suitable entity that can be
         used as an ``appstruct`` and passed to the
         :meth:`deform.Field.render` of an instance of
         :attr:`form_class`.

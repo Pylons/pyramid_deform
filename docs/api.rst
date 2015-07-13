@@ -5,13 +5,14 @@ API Documentation
 .. automodule:: pyramid_deform
    :members: includeme
 
-Form view
----------
+Form views
+----------
 
 .. autoclass:: FormView
    :members: 
 
     .. automethod:: __call__
+
 
 Other
 -----

@@ -1,3 +1,12 @@
+Next release
+------------
+
+- Add ``ignore_buttons`` option to the FormView ``__call__`` method.
+  With this set to ``True``, calling a FormView will result in no button
+  handler methods (success or failure) being called during proccessing.
+  This option allows such a button handler method to render the FormView 
+  as a response.  Without this option, infinite recursion will result.
+
 0.2 (2013-08-01)
 ----------------
 

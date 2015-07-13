@@ -59,6 +59,21 @@ class TestFormView(unittest.TestCase):
         result = inst()
         self.assertEqual(result, response)
 
+    def test__call__ignore_buttons(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        request.POST['submit'] = True
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.buttons = (DummyButton('submit'), )
+        inst.submit_success = lambda *x: 'success'
+        inst.form_class = DummyForm
+        result = inst(ignore_buttons=True)
+        #Result should not be success - button handler is ignored
+        self.assertEqual(
+            result,
+            {'css_links': (), 'js_links': (), 'form': 'rendered with None'})
+
     def test___call__button_in_request(self):
         schema = DummySchema()
         request = DummyRequest()
@@ -141,6 +156,23 @@ class TestFormView(unittest.TestCase):
         # All options should end up on the form, overriding any defaults
         for key, value in dict(form_options).items():
             self.assertEqual(getattr(form, key), value)
+
+    def test_prepare_form(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.form_class = DummyForm
+
+        def manipulate_form(self, form):
+            form.custom_attr = 'custom-attr'
+
+        inst.before = types.MethodType(manipulate_form, inst)
+        form = inst.prepare_form()
+
+        #Form should be correct type and customised according to options
+        self.assertTrue(isinstance(form, DummyForm))
+        self.assertEqual(form.custom_attr, 'custom-attr')
 
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):

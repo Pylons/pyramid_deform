@@ -73,9 +73,26 @@ class FormView(object):
         """
         return {'request': self.request}
 
+    def prepare_form(self):
+        """
+        Prepares the form object according to the provided options.
+
+        This method, in addition to instantiating an instance of the
+        given :attr:``form_class``, will process the form by calling
+        :meth:`before`. Returns an instance of the :attr:`form_class`.
+        """
+        use_ajax = getattr(self, 'use_ajax', False)
+        ajax_options = getattr(self, 'ajax_options', '{}')
+        self.schema = self.schema.bind(**self.get_bind_data())
+        form = self.form_class(self.schema, buttons=self.buttons,
+                               use_ajax=use_ajax, ajax_options=ajax_options,
+                               **dict(self.form_options))
+        self.before(form)
+        return form
+
     def __call__(self):
         """ 
-        Prepares and render the form according to provided options.
+        Prepares and renders the form according to provided options.
 
         Upon receiving a ``POST`` request, this method will validate
         the request against the form instance. After validation, 
@@ -90,13 +107,7 @@ class FormView(object):
         Returns a ``dict`` structure suitable for provision tog the given
         view. By default, this is the page template specified 
         """
-        use_ajax = getattr(self, 'use_ajax', False)
-        ajax_options = getattr(self, 'ajax_options', '{}')
-        self.schema = self.schema.bind(**self.get_bind_data())
-        form = self.form_class(self.schema, buttons=self.buttons,
-                               use_ajax=use_ajax, ajax_options=ajax_options,
-                               **dict(self.form_options))
-        self.before(form)
+        form = self.prepare_form()
         reqts = form.get_widget_resources()
         result = None
 
@@ -130,8 +141,8 @@ class FormView(object):
         By default, this method does nothing. Override this method
         in your derived class to modify the ``form``. Your function
         will be executed immediately after instansiating the form
-        instance in :meth:`__call__` (thus before obtaining widget resources,
-        considering buttons, or rendering).
+        instance in :meth:`prepare_form` (thus before obtaining widget
+        resources, considering buttons, or rendering during :meth:`__call__`).
         """
         pass
 

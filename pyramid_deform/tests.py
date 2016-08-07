@@ -142,6 +142,23 @@ class TestFormView(unittest.TestCase):
         for key, value in dict(form_options).items():
             self.assertEqual(getattr(form, key), value)
 
+    def test_prepare_form(self):
+        schema = DummySchema()
+        request = DummyRequest()
+        inst = self._makeOne(request)
+        inst.schema = schema
+        inst.form_class = DummyForm
+
+        def manipulate_form(self, form):
+            form.custom_attr = 'custom-attr'
+
+        inst.before = types.MethodType(manipulate_form, inst)
+        form = inst.prepare_form()
+
+        #Form should be correct type and customised according to options
+        self.assertTrue(isinstance(form, DummyForm))
+        self.assertEqual(form.custom_attr, 'custom-attr')
+
 class TestFormWizardView(unittest.TestCase):
     def _makeOne(self, wizard):
         from pyramid_deform import FormWizardView

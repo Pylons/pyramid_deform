@@ -366,13 +366,22 @@ class FormWizard(object):
 
 @colander.deferred
 def deferred_csrf_value(node, kw):
-    return kw['request'].session.get_csrf_token()
+    if PY3:
+        return kw['request'].session.get_csrf_token().decode()
+    else:
+        return kw['request'].session.get_csrf_token()
 
 
 @colander.deferred
 def deferred_csrf_validator(node, kw):
     def csrf_validate(node, value):
-        if value != kw['request'].session.get_csrf_token():
+        
+        if PY3:
+            token = kw['request'].session.get_csrf_token().decode()
+        else:
+            token = kw['request'].session.get_csrf_token()
+        
+        if value != token:
             raise colander.Invalid(node,
                                    _('Invalid cross-site scripting token'))
 
